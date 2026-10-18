@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --page: #fbf6ee;
+  --card: #fffdf8;
+  --border: #e8dcc8;
+  --ink: #2b1b14;
+  --muted: #6b5848;
+  --maroon: #5b1a2b;
+  --maroon-hover: #3a0f1c;
+  --saffron: #e07a1f;
+  --gold: #c9a24b;
+  --espresso: #24100e;
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #fbf6ee;
+  color: #2b1b14;
+}
+
+body {
+  background-color: #fbf6ee;
+  color: #2b1b14;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure focus is always visible, crisp, and warm maroon */
+:focus-visible {
+  outline: 2px solid #5b1a2b !important;
+  outline-offset: 2px !important;
+}
+
+/* Editorial Monospace Headline defaults */
+.font-editorial-headline {
+  font-family: var(--font-mono), monospace;
+  text-transform: uppercase;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+/* Print styles for PDF export */
+@media print {
+  body {
+    background: #ffffff !important;
+    font-size: 12px;
+    color: #000000;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    border: 1px solid #ccc;
+    padding: 4px 8px;
+  }
+
+  /* Specific rules when user prints ONLY the digital invitation card */
+  body.print-card-mode * {
+    visibility: hidden !important;
+  }
+
+  body.print-card-mode .invitation-card-print-target,
+  body.print-card-mode .invitation-card-print-target *,
+  body.print-card-mode .hanging-card-print-target,
+  body.print-card-mode .hanging-card-print-target * {
+    visibility: visible !important;
+  }
+
+  body.print-card-mode .invitation-card-print-target,
+  body.print-card-mode .hanging-card-print-target {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 20px !important;
+    transform: none !important;
+    width: 320px !important;
+    max-width: 90% !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  body.print-card-mode .invitation-card-actions,
+  body.print-card-mode .hanging-card-string {
+    display: none !important;
+  }
+}
+
+/* Multilingual Script Fonts for Invitation Cards */
+.font-devanagari {
+  font-family: var(--font-devanagari), var(--font-serif), serif;
+}
+.font-urdu {
+  font-family: var(--font-urdu), serif;
+}
+.font-telugu {
+  font-family: var(--font-telugu), var(--font-serif), serif;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Gold Foil Effect with Shine Sweep */
+.gold-foil-text {
+  background: linear-gradient(
+    135deg,
+    #bf953f 0%,
+    #fcf6ba 25%,
+    #b38728 50%,
+    #fbf5b7 75%,
+    #aa771c 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+@keyframes gold-shine-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.gold-foil-shine {
+  background-size: 200% auto;
+}
+
+.group:hover .gold-foil-shine,
+.group:focus-within .gold-foil-shine,
+.gold-foil-shine:hover,
+.gold-foil-shine:focus {
+  animation: gold-shine-sweep 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gold-foil-shine,
+  .group:hover .gold-foil-shine,
+  .group:focus-within .gold-foil-shine {
+    animation: none !important;
+  }
+}
+
+/* Tasteful Hero Decorative Drift Motion */
+.drift-petal {
+  position: absolute;
+  top: -24px;
+  animation-name: drift-petal;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+@keyframes drift-petal {
+  0% {
+    transform: translateY(-24px) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.85;
+  }
+  50% {
+    transform: translateY(220px) translateX(12px) rotate(180deg);
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(480px) translateX(-8px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drift-petal {
+    animation: none !important;
+    display: none !important;
+  }
+}
+
+/* Gentle Garland Sway (1.5 degrees, 6s loop, transform origin at top center) */
+@keyframes garland-sway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(1.5deg);
+  }
+  75% {
+    transform: rotate(-1.5deg);
+  }
+}
+
+.animate-garland-sway {
+  transform-origin: top center;
+  animation: garland-sway 6s ease-in-out infinite;
+  animation-play-state: var(--play-state, running);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-garland-sway {
+    animation: none !important;
+  }
+}
