@@ -313,7 +313,6 @@ celebration-planner/
 │   │   ├── RunSheetSection.tsx     # Minute-by-minute day-of schedule
 │   │   ├── TimelineSection.tsx     # Milestones scaled to remaining preparation window
 │   │   ├── VendorChecklistSection. # Vendor interview checklist & questions
-│   │   ├── CardStudioSection.tsx   # Studio launcher wrapper
 │   │   ├── seating/                # Interactive guest seating chart & export
 │   │   └── venue-designer/         # 2D CAD venue layout canvas with clearance engine
 │   └── studio/                     # Drag-and-drop Card Studio designer

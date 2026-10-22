@@ -4,7 +4,6 @@ import type { EventInput, EventPlan, PlanSection } from "@/lib/schemas";
 import BudgetSection from "./sections/BudgetSection";
 import FloorPlanCard from "./sections/FloorPlanCard";
 import AutoFloorPlan from "./sections/AutoFloorPlan";
-import CardStudioSection from "./sections/CardStudioSection";
 import TimelineSection from "./sections/TimelineSection";
 import VendorChecklistSection from "./sections/VendorChecklistSection";
 import IdeasSection from "./sections/IdeasSection";
@@ -69,11 +68,6 @@ export default function PlanDisplay({
           eventInput={eventInput}
           onBudgetGuestCountChange={onGuestCountChange}
         />
-      </div>
-
-      {/* 3.5 Card studio */}
-      <div id="card-studio" className="scroll-mt-28 sm:scroll-mt-32">
-        <CardStudioSection eventInput={eventInput} plan={plan} />
       </div>
 
       {/* 4. Timeline */}

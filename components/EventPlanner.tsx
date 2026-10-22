@@ -668,8 +668,11 @@ export default function EventPlanner() {
               </div>
             </div>
 
-            {/* Digital Invitation Card at Top of Results */}
-            <div className="rounded-2xl border border-[#E8DCC8] bg-[#FFFDF8] p-6 sm:p-8">
+            {/* Digital Invitation Card & Studio at Top of Results */}
+            <div
+              id="card-studio"
+              className="scroll-mt-28 rounded-2xl border border-[#E8DCC8] bg-[#FFFDF8] p-6 sm:scroll-mt-32 sm:p-8"
+            >
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-[#E8DCC8] pb-3">
                 <div>
                   <SectionLabel label="Digital invitation" />
