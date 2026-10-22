@@ -256,4 +256,47 @@ describe("HangingInvitationCard Component", () => {
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
+
+  it("switches seamlessly between Designer Card, Use my own design, and Card Studio tabs", async () => {
+    const user = userEvent.setup();
+    render(
+      <HangingInvitationCard
+        input={{
+          hostName: "Aisha & Rahul",
+          eventType: "wedding",
+          city: "Hyderabad",
+        }}
+      />
+    );
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 220));
+    });
+
+    // Default mode is Designer Card
+    expect(screen.getByRole("tab", { name: /Designer Card/i })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+
+    // Click "Use my own design"
+    const ownDesignTab = screen.getByRole("tab", {
+      name: /Use my own design/i,
+    });
+    await user.click(ownDesignTab);
+    expect(ownDesignTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText(/In Canva choose/i)).toBeInTheDocument();
+
+    // Click "Card Studio"
+    const studioTab = screen.getByRole("tab", { name: /Card Studio/i });
+    await user.click(studioTab);
+    expect(studioTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText(/STARTER DESIGNS/i)).toBeInTheDocument();
+
+    // Switch back to Designer Card
+    const designerTab = screen.getByRole("tab", { name: /Designer Card/i });
+    await user.click(designerTab);
+    expect(designerTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("YOU'RE INVITED")).toBeInTheDocument();
+  });
 });

@@ -32,16 +32,19 @@ import {
 } from "@/lib/languages";
 import DesignerCard from "@/components/invitation/DesignerCard";
 import CustomDesignEditor from "@/components/invitation/CustomDesignEditor";
+import CardStudio from "@/components/studio/CardStudio";
 import { loadSeatingPlan, type Guest } from "@/lib/seating";
 import { getSiteUrlInfo } from "@/lib/rsvp/site";
 import type { EventEssentials } from "@/lib/rsvp/types";
+
+export type InvitationMode = "designer" | "custom" | "studio";
 
 interface HangingInvitationCardProps {
   input?: Partial<EventInput> | null;
   palette?: EventPalette | null;
   guests?: Guest[];
   className?: string;
-  initialMode?: "designer" | "custom";
+  initialMode?: InvitationMode;
 }
 
 export default function HangingInvitationCard({
@@ -51,9 +54,8 @@ export default function HangingInvitationCard({
   className = "",
   initialMode = "designer",
 }: HangingInvitationCardProps) {
-  const [invitationMode, setInvitationMode] = useState<"designer" | "custom">(
-    initialMode
-  );
+  const [invitationMode, setInvitationMode] =
+    useState<InvitationMode>(initialMode);
   // ── Debounced Form Input (200ms) ──
   const [debouncedInput, setDebouncedInput] = useState<Partial<EventInput>>(
     input ?? {}
@@ -420,14 +422,18 @@ export default function HangingInvitationCard({
   return (
     <div
       className={`relative mx-auto flex w-full flex-col items-center transition-all ${
-        invitationMode === "custom" ? "max-w-4xl" : "max-w-[380px]"
+        invitationMode === "custom"
+          ? "max-w-4xl"
+          : invitationMode === "studio"
+            ? "max-w-6xl"
+            : "max-w-[380px]"
       } ${className}`}
     >
-      {/* Mode Switcher: Designer Card vs Use My Own Design */}
+      {/* Mode Switcher: Designer Card vs Upload Canva Design vs Card Studio */}
       <div
         role="tablist"
         aria-label="Invitation design mode"
-        className="mx-auto mb-5 flex w-fit items-center rounded-full border border-[#E8DCC8] bg-[#FBF6EE] p-1 print:hidden"
+        className="mx-auto mb-5 flex flex-wrap items-center justify-center gap-1 rounded-full border border-[#E8DCC8] bg-[#FBF6EE] p-1 print:hidden"
       >
         <button
           type="button"
@@ -453,7 +459,20 @@ export default function HangingInvitationCard({
               : "text-[#6B5848] hover:text-[#2B1B14]"
           }`}
         >
-          <span>🎨 Use my own design</span>
+          <span>🖼️ Use my own design</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={invitationMode === "studio"}
+          onClick={() => setInvitationMode("studio")}
+          className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
+            invitationMode === "studio"
+              ? "bg-[#5B1A2B] text-[#FBF6EE] shadow-sm"
+              : "text-[#6B5848] hover:text-[#2B1B14]"
+          }`}
+        >
+          <span>🎨 Card Studio</span>
         </button>
       </div>
 
@@ -464,6 +483,14 @@ export default function HangingInvitationCard({
           siteUrl={siteInfo.siteUrl}
           className="w-full"
         />
+      ) : invitationMode === "studio" ? (
+        <div className="w-full">
+          <CardStudio
+            palette={palette}
+            eventInput={debouncedInput as EventInput}
+            className="w-full"
+          />
+        </div>
       ) : (
         <>
           {/* Live announcement region */}
