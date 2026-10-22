@@ -132,24 +132,38 @@ export default function QrModal({
 
         {/* Actions */}
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={!dataUrl}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#5B1A2B] px-4 py-2.5 text-xs font-semibold text-[#FBF6EE] transition-colors hover:bg-[#3A0F1C] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B] disabled:opacity-50"
-          >
-            <span>📥</span>
-            <span>Download PNG</span>
-          </button>
+          {inviteUrl && (
+            <a
+              href={inviteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#5B1A2B] px-4 py-2.5 text-xs font-semibold text-[#FBF6EE] transition-colors hover:bg-[#3A0F1C] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+            >
+              <span>💌</span>
+              <span>Open Invitation in New Tab ↗</span>
+            </a>
+          )}
 
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E8DCC8] bg-[#FBF6EE] px-4 py-2 text-xs font-semibold text-[#2B1B14] transition-colors hover:border-[#5B1A2B] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
-          >
-            <span>{copied ? "✓" : "🔗"}</span>
-            <span>{copied ? "Invite link copied!" : "Copy personal link"}</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={!dataUrl}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#E8DCC8] bg-[#FBF6EE] px-3 py-2 text-xs font-semibold text-[#2B1B14] transition-colors hover:border-[#5B1A2B] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B] disabled:opacity-50"
+            >
+              <span>📥</span>
+              <span>Download PNG</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#E8DCC8] bg-[#FBF6EE] px-3 py-2 text-xs font-semibold text-[#2B1B14] transition-colors hover:border-[#5B1A2B] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+            >
+              <span>{copied ? "✓" : "🔗"}</span>
+              <span>{copied ? "Copied!" : "Copy link"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Live aria feedback */}

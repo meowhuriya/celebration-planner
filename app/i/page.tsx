@@ -12,20 +12,35 @@ export default function GuestInvitePage() {
   );
   const [payload, setPayload] = useState<InvitePayload | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [pasteInput, setPasteInput] = useState<string>("");
 
   useEffect(() => {
-    async function parseHash() {
+    async function parseInvite() {
       if (typeof window === "undefined") return;
 
-      const rawHash = window.location.hash;
-      if (!rawHash || rawHash === "#") {
+      // Check hash fragment first (#hash)
+      let rawCode = window.location.hash;
+
+      // Check URL query parameters (?code=, ?data=, ?invite=, ?h=)
+      if (!rawCode || rawCode === "#") {
+        const params = new URLSearchParams(window.location.search);
+        rawCode =
+          params.get("code") ||
+          params.get("data") ||
+          params.get("invite") ||
+          params.get("payload") ||
+          params.get("h") ||
+          "";
+      }
+
+      if (!rawCode || rawCode === "#") {
         setStatus("error");
         setErrorMessage("No invitation code found in link.");
         return;
       }
 
       try {
-        const decoded = await decodeInvitePayload(rawHash);
+        const decoded = await decodeInvitePayload(rawCode);
         if (!decoded) {
           setStatus("error");
           setErrorMessage(
@@ -37,7 +52,7 @@ export default function GuestInvitePage() {
         setPayload(decoded);
         setStatus("ready");
       } catch (err) {
-        console.error("Error decoding invite hash:", err);
+        console.error("Error decoding invite code:", err);
         setStatus("error");
         setErrorMessage(
           "We could not open this invitation link. Please request a fresh invite link from your host."
@@ -45,12 +60,34 @@ export default function GuestInvitePage() {
       }
     }
 
-    parseHash();
+    parseInvite();
 
-    // Listen for hash changes if user pastes a new one
-    window.addEventListener("hashchange", parseHash);
-    return () => window.removeEventListener("hashchange", parseHash);
+    // Listen for hash changes if user pastes or navigates
+    window.addEventListener("hashchange", parseInvite);
+    return () => window.removeEventListener("hashchange", parseInvite);
   }, []);
+
+  const handleManualOpen = async () => {
+    if (!pasteInput.trim()) return;
+    setStatus("loading");
+    try {
+      const decoded = await decodeInvitePayload(pasteInput.trim());
+      if (decoded) {
+        setPayload(decoded);
+        setStatus("ready");
+      } else {
+        setStatus("error");
+        setErrorMessage(
+          "This invitation link appears to be invalid, tampered, or expired. Please check with your host."
+        );
+      }
+    } catch {
+      setStatus("error");
+      setErrorMessage(
+        "We could not open this invitation link. Please request a fresh invite link from your host."
+      );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FBF6EE] text-[#2B1B14] antialiased">
@@ -95,6 +132,36 @@ export default function GuestInvitePage() {
             <p className="text-xs leading-relaxed text-[#6B5848]">
               {errorMessage}
             </p>
+
+            {/* Optional Manual Paste Input if testing or opening copied code */}
+            <div className="pt-2 text-left">
+              <label
+                htmlFor="manual-invite-input"
+                className="mb-1.5 block text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6B5848]"
+              >
+                Have an invite link or code?
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="manual-invite-input"
+                  type="text"
+                  value={pasteInput}
+                  onChange={(e) => setPasteInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleManualOpen();
+                  }}
+                  placeholder="Paste invite link or code..."
+                  className="flex-1 rounded-xl border border-[#E8DCC8] bg-white px-3 py-2 text-xs text-[#2B1B14] placeholder-[#A08C78] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+                />
+                <button
+                  type="button"
+                  onClick={handleManualOpen}
+                  className="rounded-xl bg-[#5B1A2B] px-3.5 py-2 text-xs font-semibold text-[#FBF6EE] hover:bg-[#3A0F1C] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+                >
+                  Open
+                </button>
+              </div>
+            </div>
 
             <div className="pt-2">
               <Link

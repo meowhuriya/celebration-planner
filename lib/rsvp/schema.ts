@@ -1,30 +1,22 @@
 import { z } from "zod";
 
 export const eventEssentialsSchema = z.object({
-  h: z.string().max(100).optional().default(""),
-  t: z.string().max(40),
-  d: z.string().max(30).optional().default(""),
-  c: z.string().max(100).optional().default(""),
-  v: z.string().max(80).optional(),
-  th: z.string().max(200).optional(),
-  dc: z.string().max(60).optional(),
-  p: z
-    .array(
-      z.string().regex(/^#[0-9a-fA-F]{6}$/, "Colors must be 6-digit hex format")
-    )
-    .length(4)
-    .optional(),
+  h: z.string().max(300).optional().default(""),
+  t: z.string().max(100).optional().default("celebration"),
+  d: z.string().max(100).optional().default(""),
+  c: z.string().max(200).optional().default(""),
+  v: z.string().max(500).optional().or(z.literal("")),
+  th: z.string().max(1000).optional().or(z.literal("")),
+  dc: z.string().max(300).optional().or(z.literal("")),
+  p: z.array(z.string()).optional(),
   s: z.enum(["royal", "modern", "floral"]).optional().default("royal"),
-  ph: z
-    .string()
-    .regex(/^\d{8,15}$/, "Phone must be 8 to 15 digits")
-    .optional(),
+  ph: z.string().max(40).optional().or(z.literal("")),
 });
 
 export const guestEssentialsSchema = z.object({
-  id: z.string().min(1).max(64),
-  n: z.string().min(1).max(80),
-  grp: z.string().max(80).optional(),
+  id: z.string().min(1).max(128),
+  n: z.string().min(1).max(160),
+  grp: z.string().max(128).optional().or(z.literal("")),
 });
 
 export const invitePayloadSchema = z.object({

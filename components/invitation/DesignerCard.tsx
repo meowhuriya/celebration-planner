@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useId } from "react";
+import React, { useId, useState, useEffect } from "react";
 import {
   type InviteCardData,
   type CardStyle,
@@ -18,6 +18,7 @@ import {
 } from "@/lib/languages";
 import { getHostFontSizeClass } from "@/lib/physics/rope";
 import type { EventPalette } from "@/lib/schemas";
+import { generateQrDataUrl } from "@/lib/rsvp/qr";
 
 export interface DesignerCardProps {
   data: InviteCardData;
@@ -28,6 +29,7 @@ export interface DesignerCardProps {
   isPrintView?: boolean;
   defaultHostText?: string;
   showActions?: boolean;
+  inviteUrl?: string;
 }
 
 /**
@@ -167,8 +169,24 @@ export default function DesignerCard({
   isPrintView = false,
   defaultHostText,
   showActions = true,
+  inviteUrl,
 }: DesignerCardProps) {
   const grainFilterId = useId();
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    let isMounted = true;
+    if (inviteUrl) {
+      generateQrDataUrl(inviteUrl, 4, 1)
+        .then((url) => {
+          if (isMounted) setQrDataUrl(url);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [inviteUrl]);
 
   const config = getCardStyleConfig(
     cardStyle,
@@ -648,17 +666,55 @@ export default function DesignerCard({
             </div>
           )}
 
-          {/* Reserved QR Area ("Scan to RSVP" with high contrast label) */}
-          <QrPlaceholder
-            color={config.dividerColor}
-            labelColor={
-              cardStyle === "royal"
-                ? "#E6CA85"
-                : cardStyle === "modern"
-                  ? "#6B5848"
-                  : "#475569"
-            }
-          />
+          {/* Reserved QR Area: Real scannable & clickable QR code */}
+          <div className="flex flex-col items-center justify-center pt-1 print:hidden">
+            {inviteUrl && qrDataUrl ? (
+              <a
+                href={inviteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Scan with phone or click to open RSVP invitation"
+                className="group flex flex-col items-center rounded-xl p-1 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+              >
+                <div className="shadow-2xs rounded-lg border border-stone-300/80 bg-white p-1.5 transition-shadow group-hover:shadow-md">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={qrDataUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-12 w-12 object-contain"
+                  />
+                </div>
+                <span
+                  className="mt-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.18em]"
+                  style={{
+                    color:
+                      cardStyle === "royal"
+                        ? "#E6CA85"
+                        : cardStyle === "modern"
+                          ? "#6B5848"
+                          : "#475569",
+                  }}
+                >
+                  <span>Scan or Click to RSVP</span>
+                  <span aria-hidden="true" className="text-[9px]">
+                    ↗
+                  </span>
+                </span>
+              </a>
+            ) : (
+              <QrPlaceholder
+                color={config.dividerColor}
+                labelColor={
+                  cardStyle === "royal"
+                    ? "#E6CA85"
+                    : cardStyle === "modern"
+                      ? "#6B5848"
+                      : "#475569"
+                }
+              />
+            )}
+          </div>
 
           {/* Warm Closing Note */}
           <p

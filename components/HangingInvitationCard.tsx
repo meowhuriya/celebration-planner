@@ -35,6 +35,7 @@ import CustomDesignEditor from "@/components/invitation/CustomDesignEditor";
 import CardStudio from "@/components/studio/CardStudio";
 import { loadSeatingPlan, type Guest } from "@/lib/seating";
 import { getSiteUrlInfo } from "@/lib/rsvp/site";
+import { encodeInvitePayload } from "@/lib/rsvp/payload";
 import type { EventEssentials } from "@/lib/rsvp/types";
 
 export type InvitationMode = "designer" | "custom" | "studio";
@@ -188,6 +189,38 @@ export default function HangingInvitationCard({
     const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
     return getSiteUrlInfo(envUrl);
   }, []);
+
+  // Generate working RSVP invite URL for the live hanging card
+  const [cardInviteUrl, setCardInviteUrl] = useState<string>("");
+
+  useEffect(() => {
+    let isMounted = true;
+    async function makeUrl() {
+      try {
+        const firstGuest = effectiveGuests[0];
+        const hash = await encodeInvitePayload({
+          v: 1,
+          e: eventEssentials,
+          g: {
+            id: firstGuest?.id || "guest-1",
+            n: firstGuest?.name || "Honored Guest",
+            grp: firstGuest?.group || "VIP",
+          },
+        });
+        if (isMounted) {
+          setCardInviteUrl(`${siteInfo.siteUrl}/i#${hash}`);
+        }
+      } catch {
+        if (isMounted) {
+          setCardInviteUrl(`${siteInfo.siteUrl}/i`);
+        }
+      }
+    }
+    makeUrl();
+    return () => {
+      isMounted = false;
+    };
+  }, [eventEssentials, effectiveGuests, siteInfo.siteUrl]);
 
   // Wake rope when input props change
   useEffect(() => {
@@ -575,6 +608,7 @@ export default function HangingInvitationCard({
                 selectedLang={selectedLang}
                 palette={palette}
                 defaultHostText="You are invited"
+                inviteUrl={cardInviteUrl}
               />
             </div>
           </div>
@@ -687,6 +721,19 @@ export default function HangingInvitationCard({
                 <span aria-hidden="true">🖨️</span>
                 <span>Print / Save as PDF</span>
               </button>
+
+              {cardInviteUrl && (
+                <a
+                  href={cardInviteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#5B1A2B] bg-[#5B1A2B] px-4 py-2 text-xs font-semibold text-[#FBF6EE] shadow-sm transition-all hover:bg-[#3A0F1C] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+                  aria-label="Preview and test guest RSVP invitation in new tab"
+                >
+                  <span aria-hidden="true">💌</span>
+                  <span>Test RSVP Page ↗</span>
+                </a>
+              )}
             </div>
           </div>
         </>

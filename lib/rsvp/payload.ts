@@ -41,7 +41,31 @@ export function fromBase64Url(base64url: string): Uint8Array {
 export async function encodeInvitePayload(
   payload: InvitePayload
 ): Promise<string> {
-  const jsonStr = JSON.stringify(payload);
+  // Strip empty strings and undefined values for compact QR payloads
+  const cleaned: InvitePayload = {
+    v: 1,
+    e: {
+      t: payload.e.t || "celebration",
+      h: payload.e.h || "",
+      d: payload.e.d || "",
+      c: payload.e.c || "",
+      v: payload.e.v?.trim() || undefined,
+      th: payload.e.th?.trim() || undefined,
+      dc: payload.e.dc?.trim() || undefined,
+      p: payload.e.p,
+      s: payload.e.s || "royal",
+      ph: payload.e.ph?.trim()
+        ? payload.e.ph.replace(/[\s\-\+\(\)]/g, "")
+        : undefined,
+    },
+    g: {
+      id: payload.g.id || "guest",
+      n: payload.g.n || "Guest",
+      grp: payload.g.grp?.trim() || undefined,
+    },
+  };
+
+  const jsonStr = JSON.stringify(cleaned);
   const utf8Bytes = new TextEncoder().encode(jsonStr);
 
   if (typeof CompressionStream !== "undefined") {
@@ -61,7 +85,8 @@ export async function encodeInvitePayload(
 }
 
 /**
- * Decodes, decompresses, and validates a base64url hash payload against the strict Zod schema.
+ * Decodes, decompresses, and validates a base64url hash payload against the Zod schema.
+ * Supports full URLs, hash fragments, query params (?code=...), raw JSON, and base64url.
  * Rejects payloads exceeding 1,500 characters, tampered data, or malformed JSON.
  */
 export async function decodeInvitePayload(
@@ -69,9 +94,39 @@ export async function decodeInvitePayload(
 ): Promise<InvitePayload | null> {
   if (!rawHash) return null;
 
-  // Clean hash prefix '#' if present
-  const hash = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
-  if (!hash.trim()) return null;
+  let hash = rawHash.trim();
+
+  // If full URL was passed, extract fragment or query param
+  if (hash.includes("#")) {
+    hash = hash.slice(hash.indexOf("#") + 1);
+  }
+  if (hash.startsWith("%23")) {
+    hash = hash.slice(3);
+  }
+  if (hash.includes("code=")) {
+    const m = hash.match(/[?&]code=([^&]+)/);
+    if (m) hash = m[1];
+  } else if (hash.includes("data=")) {
+    const m = hash.match(/[?&]data=([^&]+)/);
+    if (m) hash = m[1];
+  } else if (hash.includes("invite=")) {
+    const m = hash.match(/[?&]invite=([^&]+)/);
+    if (m) hash = m[1];
+  }
+
+  // Strip leading '#' if still present
+  if (hash.startsWith("#")) hash = hash.slice(1);
+
+  // Decode URI encoding if present
+  try {
+    hash = decodeURIComponent(hash);
+  } catch {
+    // Keep raw if decodeURIComponent fails
+  }
+
+  // Strip query/anchor artifacts
+  hash = hash.split("?")[0].split("&")[0].trim();
+  if (!hash) return null;
 
   // Strict length check: reject oversized payloads
   if (hash.length > MAX_HASH_PAYLOAD_LENGTH) {
@@ -81,10 +136,23 @@ export async function decodeInvitePayload(
     return null;
   }
 
+  // Strategy A: If hash is already raw JSON
+  if (hash.startsWith("{") && hash.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(hash);
+      const validated = invitePayloadSchema.safeParse(parsed);
+      if (validated.success) {
+        return validated.data as InvitePayload;
+      }
+    } catch {
+      // Fall through to Base64
+    }
+  }
+
   try {
     const bytes = fromBase64Url(hash);
 
-    let jsonText: string;
+    let jsonText = "";
 
     // Attempt decompression via DecompressionStream('deflate-raw')
     if (typeof DecompressionStream !== "undefined") {
@@ -102,6 +170,15 @@ export async function decodeInvitePayload(
     }
 
     const parsed = JSON.parse(jsonText);
+
+    // Normalize empty strings to undefined for optional fields
+    if (parsed && typeof parsed === "object" && parsed.e) {
+      if (parsed.e.ph === "") parsed.e.ph = undefined;
+      if (parsed.e.v === "") parsed.e.v = undefined;
+      if (parsed.e.th === "") parsed.e.th = undefined;
+      if (parsed.e.dc === "") parsed.e.dc = undefined;
+    }
+
     const validated = invitePayloadSchema.safeParse(parsed);
 
     if (!validated.success) {
