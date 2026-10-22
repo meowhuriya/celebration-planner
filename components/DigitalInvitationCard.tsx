@@ -174,7 +174,7 @@ export default function DigitalInvitationCard({
 
       {/* Main Designer Card Body (Printable Target) */}
       <div
-        className="invitation-card-print-target group transition-all"
+        className="invitation-card-print-target group border-0 bg-transparent shadow-none transition-all"
         lang={selectedLang}
         dir={currentLangConfig.dir}
       >

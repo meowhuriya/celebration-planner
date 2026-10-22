@@ -147,7 +147,7 @@ Designed to meet WCAG 2.1 AA:
 
 ## Testing
 
-537 automated tests across 45 suites (Vitest, React Testing Library, and jest-axe) cover the schemas, budget maths, timeline scaling, seating and venue logic, QR and RSVP parsing, upload validation, the AI timeout, retry and fallback with the AI call mocked, components and accessibility.
+564 automated tests across 46 suites (Vitest, React Testing Library, and jest-axe) cover the schemas, budget maths, timeline scaling, seating and venue logic, QR and RSVP parsing, upload validation, the AI timeout, retry and fallback with the AI call mocked, components and accessibility.
 
 ```bash
 npm test

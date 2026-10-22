@@ -333,7 +333,7 @@ celebration-planner/
 │   ├── studio/                     # WCAG contrast calculator, canvas renderer
 │   ├── treemap.ts                  # Binary-space partition algorithm
 │   └── utils.ts                    # Date scaling, currency formatting, math helpers
-└── tests/                          # 537 automated unit, integration, and a11y tests
+└── tests/                          # 564 automated unit, integration, and a11y tests
     ├── axe-helper.ts               # jest-axe wrapper configuration
     ├── features-axe.test.tsx       # Automated WCAG 2.1 AA accessibility assertions
     ├── rope-physics.test.ts        # Verlet integration and distance constraint tests

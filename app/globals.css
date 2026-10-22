@@ -94,7 +94,9 @@ body {
     max-width: 90% !important;
     margin: 0 auto !important;
     box-shadow: none !important;
-    background: #ffffff !important;
+    border: none !important;
+    background: transparent !important;
+    filter: none !important;
   }
 
   body.print-card-mode .invitation-card-actions,

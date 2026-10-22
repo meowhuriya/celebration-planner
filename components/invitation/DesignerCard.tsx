@@ -31,115 +31,35 @@ export interface DesignerCardProps {
 }
 
 /**
- * Ornamental Divider SVGs matching Royal, Modern, and Floral aesthetic.
+ * Architectural divider: thin line, small diamond in the middle, thin line again.
  */
-function CardDivider({
-  type,
-  color,
-}: {
-  type: "paisley" | "confetti" | "mandala" | "geometric";
-  color: string;
-}) {
-  if (type === "paisley") {
-    return (
-      <div
-        className="my-3.5 flex items-center justify-center"
-        aria-hidden="true"
-      >
-        <svg
-          className="h-6 w-32"
-          viewBox="0 0 128 24"
-          fill="none"
-          stroke={color}
-          strokeWidth="1.2"
-        >
-          {/* Left rule */}
-          <line x1="0" y1="12" x2="38" y2="12" strokeOpacity="0.4" />
-          <circle cx="38" cy="12" r="1.5" fill={color} />
-          {/* Center Paisley Flourish */}
-          <path
-            d="M52 14 C52 10 56 6 64 6 C70 6 74 9 72 13 C70 17 62 18 64 21 C65 22 67 21 68 19"
-            strokeLinecap="round"
-          />
-          <circle cx="64" cy="12" r="2" fill={color} />
-          {/* Right rule */}
-          <circle cx="90" cy="12" r="1.5" fill={color} />
-          <line x1="90" y1="12" x2="128" y2="12" strokeOpacity="0.4" />
-        </svg>
-      </div>
-    );
-  }
-
-  if (type === "confetti") {
-    return (
-      <div
-        className="my-3.5 flex items-center justify-center"
-        aria-hidden="true"
-      >
-        <svg
-          className="h-6 w-32"
-          viewBox="0 0 128 24"
-          fill="none"
-          stroke={color}
-        >
-          <line
-            x1="0"
-            y1="12"
-            x2="42"
-            y2="12"
-            strokeWidth="1"
-            strokeOpacity="0.35"
-          />
-          {/* Confetti star burst */}
-          <path
-            d="M64 5 L66 10 L71 12 L66 14 L64 19 L62 14 L57 12 L62 10 Z"
-            fill={color}
-            strokeWidth="0.8"
-          />
-          <circle cx="48" cy="10" r="1.5" fill={color} />
-          <circle cx="80" cy="14" r="1.5" fill={color} />
-          <line
-            x1="86"
-            y1="12"
-            x2="128"
-            y2="12"
-            strokeWidth="1"
-            strokeOpacity="0.35"
-          />
-        </svg>
-      </div>
-    );
-  }
-
-  // Geometric / Minimal Rule for Modern and Community
+function CardDivider({ color }: { color: string }) {
   return (
     <div className="my-3.5 flex items-center justify-center" aria-hidden="true">
-      <svg className="h-5 w-32" viewBox="0 0 128 20" fill="none" stroke={color}>
+      <svg className="h-3 w-36" viewBox="0 0 144 12" fill="none" stroke={color}>
+        {/* Left thin line */}
         <line
-          x1="0"
-          y1="10"
-          x2="50"
-          y2="10"
-          strokeWidth="1"
-          strokeOpacity="0.35"
+          x1="8"
+          y1="6"
+          x2="60"
+          y2="6"
+          strokeWidth="0.8"
+          strokeOpacity="0.45"
         />
-        <rect
-          x="60"
-          y="6"
-          width="8"
-          height="8"
-          transform="rotate(45 64 10)"
-          fill="none"
-          strokeWidth="1.2"
+        {/* Small diamond in the middle */}
+        <polygon
+          points="72,2.5 75.5,6 72,9.5 68.5,6"
+          fill={color}
+          stroke="none"
         />
-        <circle cx="64" cy="10" r="1.5" fill={color} />
+        {/* Right thin line */}
         <line
-          x1="78"
-          y1="10"
-          x2="128"
-          y2="10"
-          strokeWidth="1"
-          strokeOpacity="0.35"
+          x1="84"
+          y1="6"
+          x2="136"
+          y2="6"
+          strokeWidth="0.8"
+          strokeOpacity="0.45"
         />
       </svg>
     </div>
@@ -289,40 +209,58 @@ export default function DesignerCard({
   };
 
   // Card shape radii
-  const isWedding = config.variant === "wedding";
-  const isBirthday = config.variant === "birthday";
+  const isRoyal =
+    cardStyle === "royal" ||
+    (!cardStyle && data.eventType?.toLowerCase() === "wedding");
+  const isBirthday =
+    !isRoyal &&
+    (data.eventType?.toLowerCase() === "birthday" ||
+      config.variant === "birthday");
   const isCommunity = config.variant === "community";
 
-  const outerShapeClass = isWedding
-    ? "rounded-t-[84px] sm:rounded-t-[96px] rounded-b-2xl sm:rounded-b-3xl"
+  const outerShapeClass = isRoyal
+    ? "rounded-t-[88px] sm:rounded-t-[100px] rounded-b-2xl sm:rounded-b-3xl"
     : isBirthday
-      ? "rounded-3xl"
+      ? "rounded-[32px] sm:rounded-[36px]"
       : "rounded-2xl sm:rounded-3xl";
 
-  const vellumShapeClass = isWedding
-    ? "rounded-t-[68px] sm:rounded-t-[80px] rounded-b-xl"
+  const vellumShapeClass = isRoyal
+    ? "rounded-t-[72px] sm:rounded-t-[84px] rounded-b-xl"
     : isBirthday
       ? "rounded-2xl"
       : "rounded-xl";
 
   return (
     <div
-      className={`relative mx-auto w-full max-w-[340px] select-none transition-transform duration-300 sm:max-w-[360px] ${className}`}
+      data-testid="designer-card-wrapper"
+      className={`relative mx-auto w-full max-w-[340px] select-none border-0 bg-transparent shadow-none transition-transform duration-300 sm:max-w-[360px] ${className}`}
+      style={{
+        filter: isPrintView
+          ? "none"
+          : "drop-shadow(0 12px 22px rgba(0, 0, 0, 0.12))",
+      }}
       dir={currentLangConfig.dir}
       lang={currentLangConfig.code}
     >
-      {/* ── Layer 1: Backing Offset Card (Wedding Arch only) ── */}
-      {isWedding && !isPrintView && (
+      {/* ── Layer 1: Subtle Back Layer (in same shape, offset 6px, rotated 1.5deg) ── */}
+      {!isPrintView && (
         <div
-          className={`absolute inset-0 ${outerShapeClass} pointer-events-none translate-x-2 translate-y-2 rotate-2 opacity-90 shadow-lg transition-transform`}
-          style={{ background: config.cardBackingBg }}
+          data-testid="card-back-layer"
+          className={`absolute inset-0 ${outerShapeClass} pointer-events-none transition-transform duration-300`}
+          style={{
+            transform: "translate3d(6px, 6px, 0) rotate(1.5deg)",
+            background: config.backLayerBg,
+            border: config.backLayerBorder,
+            zIndex: 0,
+          }}
           aria-hidden="true"
         />
       )}
 
       {/* ── Layer 2: Main Outer Card ── */}
       <div
-        className={`relative overflow-hidden ${outerShapeClass} ${config.cardBorder} ${config.cardShadow} transition-all duration-300`}
+        data-testid="designer-card-front"
+        className={`relative z-10 overflow-hidden ${outerShapeClass} ${config.cardBorder} shadow-none transition-all duration-300`}
         style={{ background: config.cardBg }}
       >
         {/* Subtle Paper Grain Filter (6% opacity) */}
@@ -522,7 +460,7 @@ export default function DesignerCard({
           </p>
 
           {/* Ornamental Divider */}
-          <CardDivider type={config.ornamentType} color={config.dividerColor} />
+          <CardDivider color={config.dividerColor} />
 
           {/* ── Big Date Block ── */}
           <div
@@ -603,48 +541,72 @@ export default function DesignerCard({
                 <span>{data.city || "Venue City"}</span>
               </span>
             </div>
-
-            {/* Cultural Theme / Tradition Badges */}
-            {(data.cultureOrTradition || data.vibeOrTheme) && (
-              <div className="mt-2 flex flex-wrap justify-center gap-1.5">
-                {data.cultureOrTradition && (
-                  <span
-                    className={`inline-block max-w-full break-words rounded-full px-2.5 py-0.5 text-center text-[10px] font-semibold uppercase tracking-[0.12em] ${config.badgeBg} ${config.badgeText} ${config.badgeBorder} border`}
-                  >
-                    {data.cultureOrTradition}
-                  </span>
-                )}
-                {data.vibeOrTheme && (
-                  <span
-                    className={`inline-block max-w-full break-words rounded-full px-2.5 py-0.5 text-center text-[10px] font-semibold uppercase tracking-[0.12em] ${config.badgeBg} ${config.badgeText} ${config.badgeBorder} border`}
-                  >
-                    {data.vibeOrTheme}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* Optional Venue Name & Dress Code */}
-          {(data.venueName || data.dressCode) && (
-            <div
-              className="my-2.5 space-y-1 px-1 text-left text-xs"
-              style={{ color: config.bodyTextColor }}
-            >
+          {/* ── Readable Pills under the Date (tradition, theme, venue, dress code) ── */}
+          {(data.cultureOrTradition ||
+            data.vibeOrTheme ||
+            data.venueName ||
+            data.dressCode) && (
+            <div className="my-3 flex flex-wrap items-center justify-center gap-1.5 px-0.5">
+              {data.cultureOrTradition && (
+                <span
+                  data-testid="pill-tradition"
+                  className="shadow-2xs inline-flex max-w-[280px] items-center justify-center break-words rounded-full px-3 py-1 text-center text-[10px] font-semibold leading-tight tracking-wide"
+                  style={{
+                    backgroundColor: config.pillBg,
+                    color: config.pillText,
+                    border: `1px solid ${config.pillBorder}`,
+                  }}
+                >
+                  <span className="line-clamp-2">
+                    {data.cultureOrTradition}
+                  </span>
+                </span>
+              )}
+              {data.vibeOrTheme && (
+                <span
+                  data-testid="pill-theme"
+                  className="shadow-2xs inline-flex max-w-[280px] items-center justify-center break-words rounded-full px-3 py-1 text-center text-[10px] font-semibold leading-tight tracking-wide"
+                  style={{
+                    backgroundColor: config.pillBg,
+                    color: config.pillText,
+                    border: `1px solid ${config.pillBorder}`,
+                  }}
+                >
+                  <span className="line-clamp-2">{data.vibeOrTheme}</span>
+                </span>
+              )}
               {data.venueName && (
-                <p className="flex items-start gap-1.5 font-medium">
+                <span
+                  data-testid="pill-venue"
+                  className="shadow-2xs inline-flex max-w-[280px] items-center justify-center gap-1 break-words rounded-full px-3 py-1 text-center text-[10px] font-semibold leading-tight tracking-wide"
+                  style={{
+                    backgroundColor: config.pillBg,
+                    color: config.pillText,
+                    border: `1px solid ${config.pillBorder}`,
+                  }}
+                >
                   <span aria-hidden="true">🏛️</span>
-                  <span>{data.venueName}</span>
-                </p>
+                  <span className="line-clamp-2">{data.venueName}</span>
+                </span>
               )}
               {data.dressCode && (
-                <p className="flex items-start gap-1.5 font-medium">
+                <span
+                  data-testid="pill-dresscode"
+                  className="shadow-2xs inline-flex max-w-[280px] items-center justify-center gap-1 break-words rounded-full px-3 py-1 text-center text-[10px] font-semibold leading-tight tracking-wide"
+                  style={{
+                    backgroundColor: config.pillBg,
+                    color: config.pillText,
+                    border: `1px solid ${config.pillBorder}`,
+                  }}
+                >
                   <span aria-hidden="true">👔</span>
-                  <span>
-                    Dress code:{" "}
+                  <span className="line-clamp-2">
+                    <span>Dress code: </span>
                     <span className="font-semibold">{data.dressCode}</span>
                   </span>
-                </p>
+                </span>
               )}
             </div>
           )}

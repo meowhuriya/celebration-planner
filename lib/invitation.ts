@@ -42,6 +42,8 @@ export interface CardStyleConfig {
   // Outer card styling
   cardBg: string;
   cardBackingBg: string;
+  backLayerBg: string;
+  backLayerBorder: string;
   cardBorder: string;
   cardShadow: string;
   // Inner vellum styling
@@ -58,6 +60,9 @@ export interface CardStyleConfig {
   badgeBg: string;
   badgeText: string;
   badgeBorder: string;
+  pillBg: string;
+  pillText: string;
+  pillBorder: string;
   dividerColor: string;
   // Effects & Ornaments
   useGoldFoil: boolean;
@@ -311,9 +316,10 @@ export function getCardStyleConfig(
       // Deep burgundy / maroon background with antique gold foil accents
       cardBg: "linear-gradient(160deg, #3B0D14 0%, #29060B 50%, #1A0307 100%)",
       cardBackingBg: p1 || "#D4AF37",
+      backLayerBg: "#150205",
+      backLayerBorder: "1px solid rgba(212, 175, 55, 0.35)",
       cardBorder: "border border-[#D4AF37]/50",
-      cardShadow:
-        "shadow-[0_24px_50px_-12px_rgba(0,0,0,0.55),0_0_20px_rgba(212,175,55,0.15)]",
+      cardShadow: "shadow-none",
       // Semi-transparent dark frosted vellum panel
       vellumBg: "bg-black/30",
       vellumBorder: "border-[#D4AF37]/35",
@@ -328,6 +334,9 @@ export function getCardStyleConfig(
       badgeBg: "bg-[#4D121B]/90",
       badgeText: "text-[#FFF8EE]",
       badgeBorder: "border-[#D4AF37]/45",
+      pillBg: "rgba(212, 175, 55, 0.22)",
+      pillText: "#FAF6EE",
+      pillBorder: "rgba(212, 175, 55, 0.45)",
       dividerColor: "#D4AF37",
       useGoldFoil: true,
       ornamentType,
@@ -344,8 +353,10 @@ export function getCardStyleConfig(
       // Warm ivory background, generous white space, crisp minimal architectural lines
       cardBg: "#FAF8F5",
       cardBackingBg: p2 || "#800020",
+      backLayerBg: "#EDE8E1",
+      backLayerBorder: "1px solid #DCD6CA",
       cardBorder: "border border-[#E7E2D9]",
-      cardShadow: "shadow-[0_18px_40px_-12px_rgba(0,0,0,0.1)]",
+      cardShadow: "shadow-none",
       // Semi-transparent light vellum panel
       vellumBg: "bg-white/80",
       vellumBorder: "border-[#E7E2D9]",
@@ -360,6 +371,9 @@ export function getCardStyleConfig(
       badgeBg: "bg-[#F3EFEA]",
       badgeText: "text-[#1C1917]",
       badgeBorder: "border-[#DDD7CE]",
+      pillBg: "#EDE7DF",
+      pillText: "#1C1917",
+      pillBorder: "#D5CDC2",
       dividerColor: "#111111",
       useGoldFoil: false,
       ornamentType: "geometric",
@@ -376,8 +390,10 @@ export function getCardStyleConfig(
     // Soft luminous pastel gradient background
     cardBg: `linear-gradient(145deg, #FFF8F0 0%, #FFF1F2 45%, #F5F3FF 100%)`,
     cardBackingBg: p3 || "#2E7D32",
+    backLayerBg: "#F5EBEB",
+    backLayerBorder: "1px solid rgba(254, 205, 211, 0.7)",
     cardBorder: "border border-rose-200/70",
-    cardShadow: "shadow-[0_20px_44px_-12px_rgba(244,63,94,0.12)]",
+    cardShadow: "shadow-none",
     // Semi-transparent frosted white vellum panel
     vellumBg: "bg-white/85",
     vellumBorder: "border-rose-200/60",
@@ -392,6 +408,9 @@ export function getCardStyleConfig(
     badgeBg: "bg-rose-100/85",
     badgeText: "text-rose-950",
     badgeBorder: "border-rose-300",
+    pillBg: "#FFE4E8",
+    pillText: "#4C0519",
+    pillBorder: "#FECDD3",
     dividerColor: "#E11D48",
     useGoldFoil: false,
     ornamentType,
@@ -690,4 +709,35 @@ export function getGoogleMapsUrl(venueName?: string, city?: string): string {
     return "https://www.google.com/maps";
   }
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+/**
+ * Returns canonical pill text and effective background hex colors for contrast validation.
+ */
+export function getPillEffectiveColors(style: CardStyle = "royal"): {
+  textColor: string;
+  bgColor: string;
+  borderColor: string;
+} {
+  if (style === "royal") {
+    return {
+      textColor: "#FAF6EE",
+      // Translucent gold on dark maroon card (#29060B/#1A0307) produces effective rgb(75, 40, 20) = #4B2814
+      bgColor: "#4B2814",
+      borderColor: "rgba(212, 175, 55, 0.45)",
+    };
+  }
+  if (style === "modern") {
+    return {
+      textColor: "#1C1917",
+      bgColor: "#EDE7DF",
+      borderColor: "#D5CDC2",
+    };
+  }
+  // Floral
+  return {
+    textColor: "#4C0519",
+    bgColor: "#FFE4E8",
+    borderColor: "#FECDD3",
+  };
 }

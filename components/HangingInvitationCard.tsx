@@ -478,7 +478,7 @@ export default function HangingInvitationCard({
             tabIndex={0}
             onKeyDown={handleKeyDown}
             aria-label="Interactive digital invitation card (drag with pointer or use arrow keys to swing)"
-            className="relative w-full overflow-visible rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-4"
+            className="relative w-full overflow-visible rounded-3xl border-0 bg-transparent shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-4"
             style={{
               height: stageHeight,
               touchAction: "none",
@@ -533,7 +533,7 @@ export default function HangingInvitationCard({
                 userSelect: "none",
                 WebkitUserSelect: "none",
               }}
-              className="hanging-card-print-target group w-[310px] cursor-grab focus:outline-none active:cursor-grabbing sm:w-[330px]"
+              className="hanging-card-print-target group w-[310px] cursor-grab border-0 bg-transparent shadow-none focus:outline-none active:cursor-grabbing sm:w-[330px]"
             >
               {/* Punched Hanging Ring at top-center */}
               <div
