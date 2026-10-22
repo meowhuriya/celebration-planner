@@ -2,7 +2,7 @@
 
 **Event planning, made easy.** Tell Celebrate about a wedding, birthday, or community event and get a complete plan in seconds: budget, timeline, vendor checklist, ideas, a day-of schedule and a backup plan. Then use built-in tools to design the venue, seat every guest, and send personal QR invitations.
 
-- **Live demo:** `<your-deployed-link>`
+- **Live demo:** `<https://celebration-planner-two.vercel.app/>`
 - **Demo video:** `<your-video-link>`
 
 Built for the **PromptWars Virtual** "Celebration & Event Planner" challenge.
