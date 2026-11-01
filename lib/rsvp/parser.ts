@@ -143,11 +143,18 @@ export function parseRsvpReplies(
     }
 
     const prefix = parts[0];
-    const guestId = parts[1]?.trim();
+    const guestId = parts[1]?.trim() || "";
     const rawStatus = parts[2]?.trim().toUpperCase();
-    const rawPartySize = parseInt(parts[3]?.trim() || "1", 10);
-    const rawFood = parts[4]?.trim().toLowerCase();
+    const rawPartySizeStr = parts[3]?.trim() || "1";
+    const rawPartySize = parseInt(rawPartySizeStr, 10);
+    const rawFood = parts[4]?.trim().toLowerCase().slice(0, 200);
     const rawNote = parts.slice(5).join("|").trim();
+
+    // Strict guestId format validation (alphanumeric, hyphen, underscore only)
+    if (!/^[a-zA-Z0-9_-]{1,64}$/.test(guestId)) {
+      errors.push(`Invalid guestId format in reply: ${trimmed}`);
+      continue;
+    }
 
     // Normalize status (accept Y/N/M or YES/NO/MAYBE)
     let normalizedStatus = rawStatus;
@@ -155,20 +162,44 @@ export function parseRsvpReplies(
     else if (rawStatus === "NO") normalizedStatus = "N";
     else if (rawStatus === "MAYBE") normalizedStatus = "M";
 
+    // Strict partySize bounds checking: reject outside [0, 20] or outside [1, 20] for Y/M
+    if (isNaN(rawPartySize) || rawPartySize < 0 || rawPartySize > 20) {
+      errors.push(
+        `Invalid party size '${rawPartySizeStr}' (must be 1-20): ${trimmed}`
+      );
+      continue;
+    }
+    if (
+      (normalizedStatus === "Y" || normalizedStatus === "M") &&
+      rawPartySize < 1
+    ) {
+      errors.push(
+        `Party size must be at least 1 for attending/tentative RSVP: ${trimmed}`
+      );
+      continue;
+    }
+
     // Normalize food choice (accept veg/nonveg/either/none or full words)
     let normalizedFood = rawFood;
     if (rawFood === "vegetarian") normalizedFood = "veg";
     else if (rawFood === "non-vegetarian" || rawFood === "nonvegetarian")
       normalizedFood = "nonveg";
 
+    // Strip control characters & HTML tags from note, capping at 200 chars
+    const sanitizedRawNote = rawNote
+      .replace(/[\x00-\x1F\x7F]/g, "")
+      .replace(/<[^>]*>/g, "")
+      .replace(/[<>]/g, "")
+      .slice(0, 200);
+
     // Validate using Zod schema
     const validation = replyCodeLineSchema.safeParse({
       prefix,
       guestId,
       status: normalizedStatus,
-      partySize: isNaN(rawPartySize) ? 1 : rawPartySize,
+      partySize: normalizedStatus === "N" ? 0 : rawPartySize,
       foodChoice: normalizedFood,
-      note: rawNote,
+      note: sanitizedRawNote,
     });
 
     if (!validation.success) {
@@ -201,18 +232,12 @@ export function parseRsvpReplies(
       continue;
     }
 
-    // Sanitize note (strip tags and angle brackets)
-    const cleanNote = (vNote || "")
-      .replace(/<[^>]*>/g, "")
-      .replace(/[<>]/g, "")
-      .slice(0, 140);
-
     // Store reply (later replies for the same guest overwrite earlier in the paste)
     repliesToApply.set(guestId, {
       status: mappedStatus,
       partySize: mappedStatus === "no" ? 0 : vSize,
       foodChoice: mappedStatus === "no" ? undefined : mappedFood,
-      note: cleanNote || undefined,
+      note: vNote || undefined,
     });
   }
 

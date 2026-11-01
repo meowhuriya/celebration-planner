@@ -472,7 +472,12 @@ export default function HangingInvitationCard({
           type="button"
           role="tab"
           aria-selected={invitationMode === "designer"}
-          onClick={() => setInvitationMode("designer")}
+          onClick={() => {
+            setInvitationMode("designer");
+            setLiveAnnouncement(
+              "Switched invitation view to Designer Card with interactive physics swing."
+            );
+          }}
           className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
             invitationMode === "designer"
               ? "bg-[#5B1A2B] text-[#FBF6EE] shadow-sm"
@@ -485,7 +490,12 @@ export default function HangingInvitationCard({
           type="button"
           role="tab"
           aria-selected={invitationMode === "custom"}
-          onClick={() => setInvitationMode("custom")}
+          onClick={() => {
+            setInvitationMode("custom");
+            setLiveAnnouncement(
+              "Switched invitation view to Custom Design Editor."
+            );
+          }}
           className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
             invitationMode === "custom"
               ? "bg-[#5B1A2B] text-[#FBF6EE] shadow-sm"
@@ -498,7 +508,12 @@ export default function HangingInvitationCard({
           type="button"
           role="tab"
           aria-selected={invitationMode === "studio"}
-          onClick={() => setInvitationMode("studio")}
+          onClick={() => {
+            setInvitationMode("studio");
+            setLiveAnnouncement(
+              "Switched invitation view to Card Studio multi-layer canvas designer."
+            );
+          }}
           className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
             invitationMode === "studio"
               ? "bg-[#5B1A2B] text-[#FBF6EE] shadow-sm"
@@ -507,6 +522,16 @@ export default function HangingInvitationCard({
         >
           <span>🎨 Card Studio</span>
         </button>
+      </div>
+
+      {/* Screen reader live announcement region across all invitation modes */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {liveAnnouncement}
       </div>
 
       {invitationMode === "custom" ? (
@@ -526,11 +551,6 @@ export default function HangingInvitationCard({
         </div>
       ) : (
         <>
-          {/* Live announcement region */}
-          <div role="status" aria-live="polite" className="sr-only">
-            {liveAnnouncement}
-          </div>
-
           {/* Physics Hanging Stage */}
           <div
             ref={containerRef}

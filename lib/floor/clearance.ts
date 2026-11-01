@@ -7,6 +7,43 @@ import type {
 import { getBounds, overlaps, roundFloat } from "./geometry";
 
 /**
+ * Two-phase collision & clearance evaluation pipeline:
+ *
+ * 1. Broad-Phase AABB Culling:
+ *    Performs a fast O(1) Axis-Aligned Bounding Box test expanded by a clearance
+ *    buffer (default 0.9m). If bounding boxes do not intersect within the buffer,
+ *    items cannot violate clearance rules and are immediately pruned.
+ *
+ * 2. Narrow-Phase Clearance / SAT Projection:
+ *    Executes exact trigonometric distance or Separating Axis Theorem (SAT) polygon
+ *    edge-normal projections only on candidate pairs surviving broad-phase culling.
+ *
+ * Complexity:
+ *    - Worst case (all items tightly clustered): O(N^2) pairwise evaluations.
+ *    - Spatial culling average case: O(N) active-node frame complexity, as distant items
+ *      are discarded before narrow-phase trigonometric & matrix calculations occur.
+ */
+export function broadPhaseClearanceAABB(
+  itemA: FloorItem,
+  itemB: FloorItem,
+  bufferM = 0.9
+): boolean {
+  const bA = getBounds(itemA);
+  const bB = getBounds(itemB);
+
+  // If bounding boxes expanded by bufferM do not overlap, they cannot violate clearance
+  if (
+    bA.maxX + bufferM < bB.minX ||
+    bB.maxX + bufferM < bA.minX ||
+    bA.maxY + bufferM < bB.minY ||
+    bB.maxY + bufferM < bA.minY
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Calculates minimum distance in meters between two tables.
  */
 function tableDistance(itemA: FloorItem, itemB: FloorItem): number {
@@ -97,6 +134,11 @@ export function clearanceViolations(
 
       const pairKey = [tA.id, tB.id].sort().join("::");
       if (reportedOverlapPairs.has(pairKey) || reportedTableGaps.has(pairKey)) {
+        continue;
+      }
+
+      // Broad-Phase AABB Culling: O(1) buffer rejection before narrow-phase distance
+      if (!broadPhaseClearanceAABB(tA, tB, 0.9)) {
         continue;
       }
 

@@ -381,13 +381,27 @@ export default function CardStudioCanvas({
           height: design.height * zoom,
         }}
       >
-        {/* Real HTML Canvas */}
+        {/* Real HTML Canvas with Accessible Telemetry */}
         <canvas
           ref={canvasRef}
           width={design.width}
           height={design.height}
+          role="region"
+          aria-label={`Interactive invitation design canvas: ${design.elements.length} elements placed.`}
           className="h-full w-full rounded-sm"
         />
+
+        {/* Screen Reader ARIA Live Telemetry */}
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+        >
+          {selectedElement
+            ? `Selected ${selectedElement.type} element: position x ${Math.round(selectedElement.x)}, y ${Math.round(selectedElement.y)}, width ${Math.round(selectedElement.w)}, height ${Math.round(selectedElement.h)}.`
+            : `Card canvas idle: ${design.elements.length} design layers.`}
+        </div>
 
         {/* Center Snapping Guidelines */}
         {guideLines?.x !== undefined && (

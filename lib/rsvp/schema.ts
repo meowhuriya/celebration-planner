@@ -31,9 +31,13 @@ export const hostPhoneSchema = z
 
 export const replyCodeLineSchema = z.object({
   prefix: z.literal("RSVP1"),
-  guestId: z.string().min(1).max(64),
+  guestId: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-zA-Z0-9_-]+$/, "Guest ID must be alphanumeric or UUID format"),
   status: z.enum(["Y", "N", "M"]),
-  partySize: z.number().int().min(0).max(5),
+  partySize: z.number().int().min(0).max(20),
   foodChoice: z.enum(["veg", "nonveg", "either", "none"]),
-  note: z.string().max(140).optional(),
+  note: z.string().max(200).optional(),
 });

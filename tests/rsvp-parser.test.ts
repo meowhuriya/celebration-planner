@@ -199,4 +199,76 @@ RSVP1|g1|Y|3|nonveg|Confirmed we are coming!
     expect(summary.nonVegetarianCount).toBe(3);
     expect(summary.eitherCount).toBe(1);
   });
+
+  describe("Validation Hardening & Adversarial Edge Cases", () => {
+    it("rejects malformed or adversarial guest IDs (traversal, punctuation, script tags)", () => {
+      const maliciousPastes = [
+        "RSVP1|../../etc/passwd|Y|2|veg|hacked",
+        "RSVP1|<script>alert(1)</script>|Y|1|veg|xss",
+        "RSVP1|guest;DROP TABLE guests;|Y|1|veg|sql",
+        "RSVP1|g 1|Y|1|veg|spaces not allowed",
+      ];
+
+      for (const line of maliciousPastes) {
+        const result = parseRsvpReplies(line, sampleGuests);
+        expect(result.appliedCount).toBe(0);
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.errors[0]).toMatch(/Invalid guestId format/);
+      }
+    });
+
+    it("rejects negative or 0 partySize for attending guests to prevent headcount skewing", () => {
+      const negativePasted = "RSVP1|g1|Y|-5|veg|Family coming";
+      const resNeg = parseRsvpReplies(negativePasted, sampleGuests);
+      expect(resNeg.appliedCount).toBe(0);
+      expect(resNeg.errors.some((e) => e.includes("Invalid party size"))).toBe(
+        true
+      );
+
+      const zeroPasted = "RSVP1|g1|Y|0|veg|No one";
+      const resZero = parseRsvpReplies(zeroPasted, sampleGuests);
+      expect(resZero.appliedCount).toBe(0);
+      expect(
+        resZero.errors.some((e) => e.includes("Party size must be at least 1"))
+      ).toBe(true);
+    });
+
+    it("rejects integer overflow and oversized partySize outside [1, 20]", () => {
+      const overflowPasted = "RSVP1|g1|Y|999999|veg|Massive party";
+      const result = parseRsvpReplies(overflowPasted, sampleGuests);
+      expect(result.appliedCount).toBe(0);
+      expect(result.errors.some((e) => e.includes("Invalid party size"))).toBe(
+        true
+      );
+
+      const oversizedPasted = "RSVP1|g1|Y|25|veg|Big group";
+      const res25 = parseRsvpReplies(oversizedPasted, sampleGuests);
+      expect(res25.appliedCount).toBe(0);
+    });
+
+    it("strips ASCII control characters and truncates notes exceeding 200 characters", () => {
+      const longNote = "A".repeat(250);
+      const controlChars = "Hello\x00\x08\x1bWorld";
+      const pasted = `RSVP1|g1|Y|4|veg|${controlChars} ${longNote}`;
+
+      const result = parseRsvpReplies(pasted, sampleGuests);
+      expect(result.appliedCount).toBe(1);
+
+      const g1 = result.updatedGuests.find((g) => g.id === "g1");
+      expect(g1?.note).toBeDefined();
+      expect(g1!.note!.length).toBeLessThanOrEqual(200);
+      expect(g1!.note).not.toContain("\x00");
+      expect(g1!.note).not.toContain("\x08");
+      expect(g1!.note).not.toContain("\x1b");
+      expect(g1!.note).toContain("HelloWorld");
+    });
+
+    it("accepts valid party sizes up to 20 for large family RSVPs", () => {
+      const pasted = "RSVP1|g1|Y|18|nonveg|Big family reunion";
+      const result = parseRsvpReplies(pasted, sampleGuests);
+      expect(result.appliedCount).toBe(1);
+      const g1 = result.updatedGuests.find((g) => g.id === "g1");
+      expect(g1?.partySize).toBe(18);
+    });
+  });
 });
