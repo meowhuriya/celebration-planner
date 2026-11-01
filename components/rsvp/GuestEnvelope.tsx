@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { InvitePayload } from "@/lib/rsvp/types";
 import DesignerCard from "@/components/invitation/DesignerCard";
 import { formatRsvpHumanMessage } from "@/lib/rsvp/parser";
+import { syncGuestRsvpLocally } from "@/lib/rsvp/sync";
 import {
   buildIcsCalendar,
   triggerIcsDownload,
@@ -67,12 +68,61 @@ export default function GuestEnvelope({
     setAnnouncement(`Envelope opened. Invitation for ${guestName} revealed.`);
   };
 
+  // Immediate Real-Time Local Sync handlers for same-browser demo
+  const handleSelectAttending = (status: "yes" | "no" | "maybe") => {
+    setAttending(status);
+    syncGuestRsvpLocally({
+      guestId: guestData.id,
+      status,
+      partySize: status === "no" ? 0 : partySize,
+      foodChoice: status === "no" ? undefined : foodChoice,
+      note: note.trim() || undefined,
+    });
+  };
+
+  const handleSelectPartySize = (size: number) => {
+    setPartySize(size);
+    if (attending) {
+      syncGuestRsvpLocally({
+        guestId: guestData.id,
+        status: attending,
+        partySize: size,
+        foodChoice,
+        note: note.trim() || undefined,
+      });
+    }
+  };
+
+  const handleSelectFood = (
+    choice: "vegetarian" | "non-vegetarian" | "either"
+  ) => {
+    setFoodChoice(choice);
+    if (attending) {
+      syncGuestRsvpLocally({
+        guestId: guestData.id,
+        status: attending,
+        partySize,
+        foodChoice: choice,
+        note: note.trim() || undefined,
+      });
+    }
+  };
+
   // Handle Submit RSVP
   const handleSendReply = async () => {
     if (!attending) {
       setAnnouncement("Please choose whether you are attending.");
       return;
     }
+
+    // Immediately trigger local real-time sync across open tabs
+    syncGuestRsvpLocally({
+      guestId: guestData.id,
+      status: attending,
+      partySize: attending === "no" ? 0 : partySize,
+      foodChoice: attending === "no" ? undefined : foodChoice,
+      note: note.trim() || undefined,
+    });
 
     const humanMessage = formatRsvpHumanMessage(
       eventData.h || "",
@@ -264,7 +314,7 @@ export default function GuestEnvelope({
                     type="button"
                     role="radio"
                     aria-checked={attending === "yes"}
-                    onClick={() => setAttending("yes")}
+                    onClick={() => handleSelectAttending("yes")}
                     className={`flex flex-col items-center justify-center gap-1 rounded-2xl border p-3.5 text-center transition-all ${
                       attending === "yes"
                         ? "border-[#5B1A2B] bg-[#5B1A2B] text-[#FBF6EE] shadow-sm ring-1 ring-[#5B1A2B]"
@@ -282,7 +332,7 @@ export default function GuestEnvelope({
                     type="button"
                     role="radio"
                     aria-checked={attending === "maybe"}
-                    onClick={() => setAttending("maybe")}
+                    onClick={() => handleSelectAttending("maybe")}
                     className={`flex flex-col items-center justify-center gap-1 rounded-2xl border p-3.5 text-center transition-all ${
                       attending === "maybe"
                         ? "border-[#5B1A2B] bg-[#5B1A2B] text-[#FBF6EE] shadow-sm ring-1 ring-[#5B1A2B]"
@@ -300,7 +350,7 @@ export default function GuestEnvelope({
                     type="button"
                     role="radio"
                     aria-checked={attending === "no"}
-                    onClick={() => setAttending("no")}
+                    onClick={() => handleSelectAttending("no")}
                     className={`flex flex-col items-center justify-center gap-1 rounded-2xl border p-3.5 text-center transition-all ${
                       attending === "no"
                         ? "border-[#5B1A2B] bg-[#5B1A2B] text-[#FBF6EE] shadow-sm ring-1 ring-[#5B1A2B]"
@@ -339,7 +389,7 @@ export default function GuestEnvelope({
                             type="button"
                             role="radio"
                             aria-checked={partySize === num}
-                            onClick={() => setPartySize(num)}
+                            onClick={() => handleSelectPartySize(num)}
                             className={`flex-1 rounded-xl border py-2 text-xs font-semibold transition-all ${
                               partySize === num
                                 ? "border-[#5B1A2B] bg-[#5B1A2B] text-[#FBF6EE]"
@@ -376,7 +426,7 @@ export default function GuestEnvelope({
                             role="radio"
                             aria-checked={foodChoice === item.key}
                             onClick={() =>
-                              setFoodChoice(
+                              handleSelectFood(
                                 item.key as
                                   "vegetarian" | "non-vegetarian" | "either"
                               )

@@ -4,3 +4,4 @@ export * from "./payload";
 export * from "./parser";
 export * from "./site";
 export * from "./qr";
+export * from "./sync";

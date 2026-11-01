@@ -9,6 +9,7 @@ import {
 } from "@/lib/rsvp/payload";
 import { parseRsvpReplies, calculateRsvpSummary } from "@/lib/rsvp/parser";
 import { getSiteUrlInfo, validateHostPhone } from "@/lib/rsvp/site";
+import { listenToRsvpSync } from "@/lib/rsvp/sync";
 import QrModal from "./QrModal";
 
 interface InvitesPanelProps {
@@ -61,6 +62,35 @@ export default function InvitesPanel({
 
   // Summary calculations
   const summary = useMemo(() => calculateRsvpSummary(guests), [guests]);
+
+  // Listen for live same-browser RSVP updates from the guest /i tab
+  useEffect(() => {
+    const unsubscribe = listenToRsvpSync((update) => {
+      const guestIndex = guests.findIndex((g) => g.id === update.guestId);
+      if (guestIndex !== -1) {
+        const updated = [...guests];
+        const g = updated[guestIndex];
+        updated[guestIndex] = {
+          ...g,
+          rsvpStatus: update.status,
+          partySize: update.status === "no" ? 0 : update.partySize,
+          foodChoice: update.status === "no" ? undefined : update.foodChoice,
+          note: update.note ?? g.note,
+        };
+        onUpdateGuests(updated);
+        setAnnouncement(
+          `Live RSVP received: ${g.name} is ${
+            update.status === "yes"
+              ? "Attending"
+              : update.status === "no"
+                ? "Declined"
+                : "Tentative"
+          }`
+        );
+      }
+    });
+    return unsubscribe;
+  }, [guests, onUpdateGuests]);
 
   // Handle Host Phone change
   const handlePhoneChange = (val: string) => {

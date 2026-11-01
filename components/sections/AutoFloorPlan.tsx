@@ -20,6 +20,7 @@ import {
   loadSeatingPlan,
   saveSeatingPlan,
 } from "@/lib/seating";
+import { listenToRsvpSync } from "@/lib/rsvp/sync";
 
 interface AutoFloorPlanProps {
   guestCount?: number;
@@ -90,6 +91,45 @@ function AutoFloorPlanComponent({
   useEffect(() => {
     saveSeatingPlan(seatingState);
   }, [seatingState]);
+
+  // ── Live Same-Browser RSVP Inter-Tab Sync ──
+  useEffect(() => {
+    const unsubscribe = listenToRsvpSync((update) => {
+      setSeatingState((prev) => {
+        const guestIndex = prev.guests.findIndex(
+          (g) => g.id === update.guestId
+        );
+        if (guestIndex === -1) return prev;
+
+        const updatedGuests = [...prev.guests];
+        const prevGuest = updatedGuests[guestIndex];
+        updatedGuests[guestIndex] = {
+          ...prevGuest,
+          rsvpStatus: update.status,
+          partySize: update.status === "no" ? 0 : update.partySize,
+          foodChoice: update.status === "no" ? undefined : update.foodChoice,
+          note: update.note ?? prevGuest.note,
+        };
+
+        setAnnouncement(
+          `Real-time RSVP update: ${prevGuest.name} is ${
+            update.status === "yes"
+              ? "Attending"
+              : update.status === "no"
+                ? "Declined"
+                : "Tentative"
+          }`
+        );
+
+        return {
+          ...prev,
+          guests: updatedGuests,
+        };
+      });
+    });
+
+    return unsubscribe;
+  }, []);
 
   // 2. Compute Architectural Layout based on guest count and chosen seatsPerTable
   const layout = useMemo(() => {
