@@ -2,7 +2,7 @@
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/Tests-565%20Passing-brightgreen?style=flat&logo=vitest)](https://vitest.dev/)
+[![Tests](https://img.shields.io/badge/Tests-580%20Passing-brightgreen?style=flat&logo=vitest)](https://vitest.dev/)
 [![A11y](https://img.shields.io/badge/WCAG%202.1-AA%20Compliant-purple?style=flat)](https://www.w3.org/WAI/WCAG21/AA/)
 [![Gemini](https://img.shields.io/badge/Google%20Gemini-3.5%20Flash%20Lite-orange?style=flat&logo=google)](https://ai.google.dev/)
 
@@ -154,7 +154,7 @@ Celebrate operates completely serverless and database-free:
 
 ## Test Suite
 
-Celebrate is verified by **565 automated tests across 46 suites**:
+Celebrate is verified by **580 automated tests across 47 suites**:
 
 ```bash
 # Run the complete test suite
