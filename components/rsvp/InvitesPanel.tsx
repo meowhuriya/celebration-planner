@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import type { Guest } from "@/lib/seating";
 import type { EventEssentials, RsvpStatus } from "@/lib/rsvp/types";
-import { encodeInvitePayload } from "@/lib/rsvp/payload";
+import {
+  encodeInvitePayload,
+  encodeInvitePayloadSync,
+} from "@/lib/rsvp/payload";
 import { parseRsvpReplies, calculateRsvpSummary } from "@/lib/rsvp/parser";
 import { getSiteUrlInfo, validateHostPhone } from "@/lib/rsvp/site";
 import QrModal from "./QrModal";
@@ -71,15 +74,78 @@ export default function InvitesPanel({
     }
   };
 
-  // Generate Invite URL for a guest
+  // Pre-generate reactive guest invite URLs with instant synchronous fallback
+  const [guestUrls, setGuestUrls] = useState<Record<string, string>>(() => {
+    const initialMap: Record<string, string> = {};
+    const merged: EventEssentials = {
+      ...eventEssentials,
+      ph: phoneInput ? phoneInput.replace(/[\s\-\+\(\)]/g, "") : undefined,
+    };
+    for (const g of guests) {
+      const syncHash = encodeInvitePayloadSync({
+        v: 1,
+        e: merged,
+        g: { id: g.id, n: g.name, grp: g.group },
+      });
+      initialMap[g.id] = `${siteInfo.siteUrl}/i#${syncHash}`;
+    }
+    return initialMap;
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const merged: EventEssentials = {
+      ...eventEssentials,
+      ph: phoneInput ? phoneInput.replace(/[\s\-\+\(\)]/g, "") : undefined,
+    };
+
+    // 1. Synchronous pass: immediately ensures all guest URLs are ready without delay
+    const syncMap: Record<string, string> = {};
+    for (const g of guests) {
+      const syncHash = encodeInvitePayloadSync({
+        v: 1,
+        e: merged,
+        g: { id: g.id, n: g.name, grp: g.group },
+      });
+      syncMap[g.id] = `${siteInfo.siteUrl}/i#${syncHash}`;
+    }
+    setGuestUrls(syncMap);
+
+    // 2. Background pass with compressed hashes
+    async function updateCompressedUrls() {
+      try {
+        const asyncMap: Record<string, string> = {};
+        for (const g of guests) {
+          const hash = await encodeInvitePayload({
+            v: 1,
+            e: merged,
+            g: { id: g.id, n: g.name, grp: g.group },
+          });
+          asyncMap[g.id] = `${siteInfo.siteUrl}/i#${hash}`;
+        }
+        if (isMounted) {
+          setGuestUrls(asyncMap);
+        }
+      } catch {
+        // Keeps syncMap
+      }
+    }
+
+    updateCompressedUrls();
+    return () => {
+      isMounted = false;
+    };
+  }, [guests, eventEssentials, phoneInput, siteInfo.siteUrl]);
+
+  // Synchronous and instant URL getter for a guest
   const getGuestInviteUrl = useCallback(
-    async (guest: Guest): Promise<string> => {
+    (guest: Guest): string => {
+      if (guestUrls[guest.id]) return guestUrls[guest.id];
       const mergedEssentials: EventEssentials = {
         ...eventEssentials,
         ph: phoneInput ? phoneInput.replace(/[\s\-\+\(\)]/g, "") : undefined,
       };
-
-      const hash = await encodeInvitePayload({
+      const hash = encodeInvitePayloadSync({
         v: 1,
         e: mergedEssentials,
         g: {
@@ -88,16 +154,15 @@ export default function InvitesPanel({
           grp: guest.group,
         },
       });
-
       return `${siteInfo.siteUrl}/i#${hash}`;
     },
-    [eventEssentials, phoneInput, siteInfo.siteUrl]
+    [guestUrls, eventEssentials, phoneInput, siteInfo.siteUrl]
   );
 
   // Action: Copy Personal Invite Link
   const handleCopyLink = async (guest: Guest) => {
     try {
-      const fullUrl = await getGuestInviteUrl(guest);
+      const fullUrl = getGuestInviteUrl(guest);
       await navigator.clipboard.writeText(fullUrl);
       setCopiedGuestId(guest.id);
       setAnnouncement(`Invite link copied for ${guest.name}`);
@@ -108,8 +173,8 @@ export default function InvitesPanel({
   };
 
   // Action: Send on WhatsApp
-  const handleSendWhatsApp = async (guest: Guest) => {
-    const fullUrl = await getGuestInviteUrl(guest);
+  const handleSendWhatsApp = (guest: Guest) => {
+    const fullUrl = getGuestInviteUrl(guest);
     const hostLabel = eventEssentials.h || "us";
     const title = eventEssentials.t
       ? `${eventEssentials.t.charAt(0).toUpperCase() + eventEssentials.t.slice(1)} celebration`
@@ -125,8 +190,8 @@ export default function InvitesPanel({
   };
 
   // Action: Show QR Modal
-  const handleShowQr = async (guest: Guest) => {
-    const fullUrl = await getGuestInviteUrl(guest);
+  const handleShowQr = (guest: Guest) => {
+    const fullUrl = getGuestInviteUrl(guest);
     setQrGuest({ name: guest.name, url: fullUrl });
   };
 
@@ -350,14 +415,29 @@ export default function InvitesPanel({
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={onPrintAllInvites}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2.5 py-1 text-xs font-semibold text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
-          >
-            <span>🖨️</span>
-            <span>Print all invites (4/page)</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {filteredGuests[0] && (
+              <a
+                href={getGuestInviteUrl(filteredGuests[0])}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open live invitation preview for ${filteredGuests[0].name} in new tab`}
+                className="shadow-xs inline-flex items-center gap-1.5 rounded-lg border border-[#5B1A2B] bg-[#5B1A2B] px-3 py-1 text-xs font-semibold text-[#FBF6EE] transition-colors hover:bg-[#3A0F1C] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+              >
+                <span>💌</span>
+                <span>Open Guest Preview ({filteredGuests[0].name}) ↗</span>
+              </a>
+            )}
+
+            <button
+              type="button"
+              onClick={onPrintAllInvites}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2.5 py-1 text-xs font-semibold text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+            >
+              <span>🖨️</span>
+              <span>Print all invites (4/page)</span>
+            </button>
+          </div>
         </div>
 
         {/* Filter Pills & Search */}
@@ -477,6 +557,16 @@ export default function InvitesPanel({
 
                 {/* Per-Guest Actions */}
                 <div className="flex shrink-0 items-center gap-1.5">
+                  <a
+                    href={getGuestInviteUrl(guest)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open invitation preview for ${guest.name} in new tab`}
+                    className="shadow-xs inline-flex items-center gap-1 rounded-lg border border-[#5B1A2B] bg-[#5B1A2B] px-2.5 py-1 text-xs font-semibold text-[#FBF6EE] transition-colors hover:bg-[#3A0F1C] focus:outline-none focus:ring-1 focus:ring-[#5B1A2B]"
+                  >
+                    <span>Open ↗</span>
+                  </a>
+
                   <button
                     type="button"
                     onClick={() => handleCopyLink(guest)}

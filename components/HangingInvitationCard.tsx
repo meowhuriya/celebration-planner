@@ -35,7 +35,10 @@ import CustomDesignEditor from "@/components/invitation/CustomDesignEditor";
 import CardStudio from "@/components/studio/CardStudio";
 import { loadSeatingPlan, type Guest } from "@/lib/seating";
 import { getSiteUrlInfo } from "@/lib/rsvp/site";
-import { encodeInvitePayload } from "@/lib/rsvp/payload";
+import {
+  encodeInvitePayload,
+  encodeInvitePayloadSync,
+} from "@/lib/rsvp/payload";
 import type { EventEssentials } from "@/lib/rsvp/types";
 
 export type InvitationMode = "designer" | "custom" | "studio";
@@ -190,14 +193,37 @@ export default function HangingInvitationCard({
     return getSiteUrlInfo(envUrl);
   }, []);
 
-  // Generate working RSVP invite URL for the live hanging card
-  const [cardInviteUrl, setCardInviteUrl] = useState<string>("");
+  // Generate working RSVP invite URL for the live hanging card (instant synchronous fallback)
+  const [cardInviteUrl, setCardInviteUrl] = useState<string>(() => {
+    const firstGuest = effectiveGuests[0];
+    const syncHash = encodeInvitePayloadSync({
+      v: 1,
+      e: eventEssentials,
+      g: {
+        id: firstGuest?.id || "guest-1",
+        n: firstGuest?.name || "Honored Guest",
+        grp: firstGuest?.group || "VIP",
+      },
+    });
+    return `${siteInfo.siteUrl}/i#${syncHash}`;
+  });
 
   useEffect(() => {
     let isMounted = true;
+    const firstGuest = effectiveGuests[0];
+    const syncHash = encodeInvitePayloadSync({
+      v: 1,
+      e: eventEssentials,
+      g: {
+        id: firstGuest?.id || "guest-1",
+        n: firstGuest?.name || "Honored Guest",
+        grp: firstGuest?.group || "VIP",
+      },
+    });
+    setCardInviteUrl(`${siteInfo.siteUrl}/i#${syncHash}`);
+
     async function makeUrl() {
       try {
-        const firstGuest = effectiveGuests[0];
         const hash = await encodeInvitePayload({
           v: 1,
           e: eventEssentials,
@@ -212,7 +238,7 @@ export default function HangingInvitationCard({
         }
       } catch {
         if (isMounted) {
-          setCardInviteUrl(`${siteInfo.siteUrl}/i`);
+          setCardInviteUrl(`${siteInfo.siteUrl}/i#${syncHash}`);
         }
       }
     }

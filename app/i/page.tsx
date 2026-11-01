@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { InvitePayload } from "@/lib/rsvp/types";
-import { decodeInvitePayload } from "@/lib/rsvp/payload";
+import {
+  decodeInvitePayload,
+  decodeInvitePayloadSync,
+} from "@/lib/rsvp/payload";
 import GuestEnvelope from "@/components/rsvp/GuestEnvelope";
 
 export default function GuestInvitePage() {
@@ -15,30 +18,50 @@ export default function GuestInvitePage() {
   const [pasteInput, setPasteInput] = useState<string>("");
 
   useEffect(() => {
-    async function parseInvite() {
-      if (typeof window === "undefined") return;
+    function getRawHash(): string {
+      if (typeof window === "undefined") return "";
 
-      // Check hash fragment first (#hash)
-      let rawCode = window.location.hash;
-
-      // Check URL query parameters (?code=, ?data=, ?invite=, ?h=)
-      if (!rawCode || rawCode === "#") {
-        const params = new URLSearchParams(window.location.search);
-        rawCode =
-          params.get("code") ||
-          params.get("data") ||
-          params.get("invite") ||
-          params.get("payload") ||
-          params.get("h") ||
-          "";
+      // 1. Direct window.location.hash.slice(1)
+      if (window.location.hash && window.location.hash.length > 1) {
+        return window.location.hash.slice(1);
       }
 
-      if (!rawCode || rawCode === "#") {
+      // 2. Direct href split on '#' (safeguards against browser hash normalization quirks)
+      if (window.location.href.includes("#")) {
+        const hashPart = window.location.href.split("#")[1];
+        if (hashPart && hashPart.trim()) return hashPart.trim();
+      }
+
+      // 3. Fallback to URL search parameters (?code=, ?data=, ?invite=, ?payload=, ?h=)
+      const params = new URLSearchParams(window.location.search);
+      return (
+        params.get("code") ||
+        params.get("data") ||
+        params.get("invite") ||
+        params.get("payload") ||
+        params.get("h") ||
+        ""
+      );
+    }
+
+    async function parseInvite() {
+      const rawCode = getRawHash();
+
+      if (!rawCode) {
         setStatus("error");
         setErrorMessage("No invitation code found in link.");
         return;
       }
 
+      // Fast synchronous decode: instantly renders the envelope in 0ms if raw_ or uncompressed
+      const syncDecoded = decodeInvitePayloadSync(rawCode);
+      if (syncDecoded) {
+        setPayload(syncDecoded);
+        setStatus("ready");
+        return;
+      }
+
+      // Asynchronous decompression with timeout guard
       try {
         const decoded = await decodeInvitePayload(rawCode);
         if (!decoded) {
@@ -62,9 +85,14 @@ export default function GuestInvitePage() {
 
     parseInvite();
 
-    // Listen for hash changes if user pastes or navigates
+    // Listen for hash changes if user pastes, navigates, or window hash changes
     window.addEventListener("hashchange", parseInvite);
-    return () => window.removeEventListener("hashchange", parseInvite);
+    window.addEventListener("popstate", parseInvite);
+
+    return () => {
+      window.removeEventListener("hashchange", parseInvite);
+      window.removeEventListener("popstate", parseInvite);
+    };
   }, []);
 
   const handleManualOpen = async () => {

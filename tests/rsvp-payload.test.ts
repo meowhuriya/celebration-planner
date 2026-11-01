@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   encodeInvitePayload,
+  encodeInvitePayloadSync,
   decodeInvitePayload,
+  decodeInvitePayloadSync,
   toBase64Url,
   fromBase64Url,
   MAX_HASH_PAYLOAD_LENGTH,
@@ -126,5 +128,33 @@ describe("RSVP Payload Encoding & Decoding", () => {
 
     const decoded = fromBase64Url(b64url);
     expect(Array.from(decoded)).toEqual(Array.from(original));
+  });
+
+  describe("Synchronous Encoding & Fast Fallback", () => {
+    it("encodes and decodes synchronously with raw_ prefix", () => {
+      const syncHash = encodeInvitePayloadSync(samplePayload);
+      expect(syncHash.startsWith("raw_")).toBe(true);
+
+      const decoded = decodeInvitePayloadSync(syncHash);
+      expect(decoded).not.toBeNull();
+      expect(decoded?.e.h).toBe("Aisha & Rahul");
+      expect(decoded?.g.n).toBe("Priya Patel");
+      expect(decoded?.g.id).toBe("guest-101");
+    });
+
+    it("async decodeInvitePayload transparently decodes raw_ prefixed payloads", async () => {
+      const syncHash = encodeInvitePayloadSync(samplePayload);
+      const decoded = await decodeInvitePayload(syncHash);
+      expect(decoded).not.toBeNull();
+      expect(decoded?.e.h).toBe("Aisha & Rahul");
+      expect(decoded?.g.n).toBe("Priya Patel");
+    });
+
+    it("decodes raw_ prefixed payloads with leading '#'", async () => {
+      const syncHash = encodeInvitePayloadSync(samplePayload);
+      const decoded = await decodeInvitePayload(`#${syncHash}`);
+      expect(decoded).not.toBeNull();
+      expect(decoded?.g.n).toBe("Priya Patel");
+    });
   });
 });
