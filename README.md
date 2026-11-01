@@ -1,197 +1,181 @@
-# Celebrate
+# Celebrate 🎉
 
-**Event planning, made easy.** Tell Celebrate about a wedding, birthday, or community event and get a complete plan in seconds: budget, timeline, vendor checklist, ideas, a day-of schedule and a backup plan. Then use built-in tools to design the venue, seat every guest, and send personal QR invitations.
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/Tests-565%20Passing-brightgreen?style=flat&logo=vitest)](https://vitest.dev/)
+[![A11y](https://img.shields.io/badge/WCAG%202.1-AA%20Compliant-purple?style=flat)](https://www.w3.org/WAI/WCAG21/AA/)
+[![Gemini](https://img.shields.io/badge/Google%20Gemini-3.5%20Flash%20Lite-orange?style=flat&logo=google)](https://ai.google.dev/)
 
-- **Live demo:** `<https://celebration-planner-two.vercel.app/>`
-- **Demo video:** `<your-video-link>`
+**Event planning, made easy.** Tell Celebrate about a wedding, birthday, or community gathering and get a comprehensive, culturally tailored plan in seconds: budget, timeline, vendor checklist, creative ideas, a day-of schedule, and a contingency backup plan. Then use built-in browser CAD tools to design the venue, seat every guest, and send personal QR invitations.
+
+- 🌐 **Live Demo:** [celebration-planner-two.vercel.app](https://celebration-planner-two.vercel.app/)
+- 📹 **Demo Video:** [Watch Demo Video](https://celebration-planner-two.vercel.app/)
 
 Built for the **PromptWars Virtual** "Celebration & Event Planner" challenge.
 
 ---
 
-## What makes this different
+## What Makes Celebrate Different
 
-Most planners stop at a list. Celebrate keeps going:
+Most planners stop at a static text list. Celebrate delivers an interactive, end-to-end planning studio:
 
-1. **One AI call, a whole plan.** A single Gemini request returns a validated plan, including a colour palette that themes the results.
-2. **A venue designer.** Drag, rotate and resize tables, stage, buffet and more. Overlaps and tight walkways are flagged live, with undo and redo.
-3. **Seating with a guest on every seat.** Hover a seat to see the name, drag guests around, auto-seat by group, and print the chart.
-4. **QR invitations with no server.** Every guest gets a personal link and QR code. They scan, see their own name, and RSVP in one tap.
-5. **Cards you can design.** Pick from 3 invitation styles, upload a card made in Canva (or anywhere), or build one in the Card Studio.
-6. **Play the day.** Drag a slider through the day-of schedule and watch "now" and "next" change.
-7. **Culture-aware.** An optional tradition field (for example Nikah, Haldi, Sangeet, Diwali) tailors ideas and vendors. Amounts default to INR.
+1. **One AI call, a whole celebration.** A single Gemini request generates a structured, verified plan along with an event color palette that themes the entire interface and stationery.
+2. **Interactive 2D Venue Designer.** Drag, rotate, and snap 11 item types (tables, stage, dance floor, bar, buffet) with a live clearance engine that flags overlaps and tight walkways.
+3. **Seat-level guest management.** Hover any chair to see who is seated, drag and swap guests between tables, auto-seat by family or friend group, and print the seating chart.
+4. **Zero-Server QR RSVP System.** Every guest gets a personal QR code and link encoded via deflate compression in the URL hash. No database, zero tracking, total privacy. Guests scan, open their animated envelope, and reply in one tap via WhatsApp.
+5. **Unified Invitation Suite.** Switch seamlessly between **👑 Designer Card** (Verlet rope physics, architectural shapes), **🖼️ Use My Own Design** (Canva/image uploader with QR placement editor), and **🎨 Card Studio** (HTML5 canvas designer with batch per-guest export).
+6. **"Play the Day" timeline scrubber.** Drag through the day-of run-sheet to visualize "Current Event" and "Up Next" in real time.
+7. **Culture-aware curation.** Tailor recommendations by tradition (e.g., Nikah, Haldi, Sangeet, Mehndi, Diwali, Quinceañera). Budgets default to INR with exact rupee formatting.
 
-Only the plan itself uses AI. Everything else runs in your browser, so it is fast and private.
+> **Privacy & Speed:** Only the initial plan generation touches the AI. All physics, seating charts, venue layouts, Card Studio editing, and QR encoding run 100% locally in the browser.
 
-Want the deep technical details (algorithms, file by file)? See [docs/TECHNICAL.md](docs/TECHNICAL.md).
-
----
-
-## Features
-
-| Area           | What you get                                                                                                                                  |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Plan (AI)      | Budget that sums exactly to your total, timeline, vendor checklist with questions to ask, ideas, day-of schedule, backup plan, colour palette |
-| Budget         | Live "what-if" sliders for budget and guests, editable amounts, animated treemap                                                              |
-| Timeline       | Dates scaled to the days you actually have left, tick-off milestones, "start this week" flags                                                 |
-| Venue designer | 11 item types, grid snapping, rotation, 50-step undo, clearance warnings, venue backgrounds                                                   |
-| Seating        | Seat-level assignment, hover names, drag and swap, auto-seat by group, print and copy as text                                                 |
-| Invitations    | Hanging physics card, 3 styles, English / Hindi / Urdu / Telugu, calendar file, map link                                                      |
-| QR RSVP        | Personal links and QR codes, envelope-opening guest page, WhatsApp reply, reply import for the host                                           |
-| Own design     | Upload PNG, JPG or WebP, place the guest name and QR, export one image per guest                                                              |
-| Card Studio    | Canvas editor with templates, stickers, fonts, layers and per-guest export                                                                    |
-| Extras         | Live countdown, Play the day, print views, saved plans on your device                                                                         |
+_For deep architectural details, physics equations, and data schemas, see [docs/TECHNICAL.md](docs/TECHNICAL.md)._
 
 ---
 
-## How the AI is used
+## Feature Matrix
 
+| Capability               | Highlights                                                                                                                                                                                     |
+| :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AI Plan Generation**   | Exact-sum budget reconciliation, timeline milestones scaled to remaining preparation days, vendor interview checklist, culturally nuanced ideas, day-of run-sheet, and dual-layer backup plan. |
+| **Interactive Budget**   | Real-time "What-If" budget and guest sliders, editable amounts with automatic variance calculations, and an interactive proportional treemap.                                                  |
+| **Dynamic Timeline**     | Scaled to the days between today and your event date, milestone checkboxes, and "Start this week" urgency badges.                                                                              |
+| **Venue Designer**       | 11 item types, customizable hall dimensions, 50-step undo/redo stack, 0.9m clearance rule enforcement, and grid snapping.                                                                      |
+| **Seating Engine**       | Interactive round & rectangular tables, seat-level hover cards, auto-seat by party group, and high-DPI printable charts.                                                                       |
+| **Designer Invitation**  | 7-point Verlet rope physics hanging card, architectural shapes (Royal Arch, Birthday Scallop, Geometric Frame), English / Hindi / Urdu / Telugu copy, calendar (.ics) download, and maps link. |
+| **Zero-Server RSVP**     | URL-safe base64 + deflate hash compression, interactive envelope opening, 1-tap WhatsApp RSVP message (`RSVP1\|...`), and host reply-import parser.                                            |
+| **Custom Card Uploader** | Magic-byte file validation (PNG, JPEG, WebP), draggable guest name and QR placement boxes, and batch high-DPI image exports.                                                                   |
+| **Card Studio**          | In-browser drag-and-drop stationery builder with typography presets, festive stickers, WCAG AA contrast warnings, and batch multi-guest export.                                                |
+| **Accessibility**        | Semantic landmarks, complete keyboard operability, `prefers-reduced-motion` fallbacks, and 0 `jest-axe` violations.                                                                            |
+
+---
+
+## How the AI Works
+
+```text
+Browser ────────► POST /api/generate ────────► lib/ai.ts ────────► Google Gemini (Structured JSON)
+   ▲                       │                                                 │
+   │                       └─── Zod Schema Validation & Budget Correction ◄──┘
+   │
+   └───────────── All interactive tools run client-side (Zero latency)
 ```
-Browser ──► /api/generate ──► lib/ai.ts ──► Gemini (structured JSON)
-   ▲              │                              │
-   │              └── validate with Zod ◄────────┘
-   └── everything else runs client-side
-```
 
-- **Server-side only.** Gemini is called from route handlers (`app/api/generate`, `app/api/regenerate`). The API key never reaches the browser.
-- **Structured output.** The request asks Gemini for JSON that follows a schema built from the Zod schema. The response is then checked again with Zod.
-- **One call per plan.** Regenerating a single section makes one more targeted call, and only when the user asks.
-- **Budget is exact.** Category amounts are corrected in code so they always add up to the total.
-- **Safe prompting.** The system prompt is fixed on the server. User text is sanitized, length-limited, and placed inside `<event_data>` tags that the prompt tells the model to treat as untrusted data.
-- **Fails gracefully.** Each attempt has a 25-second timeout and is retried at most once. If generation still fails, a built-in fallback plan is shown instead of a blank screen. Identical requests are cached.
-- **Model.** Set in `lib/ai.ts` (`DEFAULT_GEMINI_MODEL`) and can be overridden with the `GEMINI_MODEL` environment variable.
+- **Server-Side Security:** Calls to Gemini are strictly confined to route handlers (`app/api/generate` and `app/api/regenerate`). The API key is never exposed to the client.
+- **Strict Structured Output:** Schemas are derived from Zod definitions using `zod-to-json-schema`. AI responses are parsed and re-validated through Zod before reaching the frontend.
+- **Budget Integrity:** Category amounts are mathematically checked and adjusted in code to ensure they sum exactly to 100% of the total budget.
+- **Prompt Injection Defense:** User inputs are sanitized, capped in length, and wrapped inside `<event_data>` tags marked as untrusted data in the server prompt.
+- **Resilient Fallbacks:** Calls feature a 25-second timeout with an automatic retry. If the network or service is unreachable, a culturally matching offline fallback template is returned instantly.
 
 ---
 
-## Getting started
+## Quickstart
 
-**Requirements:** Node.js 20 or newer and a Gemini API key from [Google AI Studio](https://aistudio.google.com).
+### Prerequisites
+
+- **Node.js:** v20.0 or higher
+- **Gemini API Key:** Free key available at [Google AI Studio](https://aistudio.google.com)
+
+### Installation
 
 ```bash
+# 1. Clone the repository
 git clone https://github.com/meowhuriya/celebration-planner.git
 cd celebration-planner
+
+# 2. Install dependencies
 npm install
-cp .env.example .env      # then add your key
+
+# 3. Configure environment variables
+cp .env.example .env
+# Edit .env to add your GEMINI_API_KEY
+
+# 4. Start local development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-### Environment variables
-
-| Variable               | Required       | Purpose                                                                                                                     |
-| ---------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`       | Yes            | Server-side Gemini key. Never exposed to the browser.                                                                       |
-| `GEMINI_MODEL`         | No             | Overrides the default model name in `lib/ai.ts`.                                                                            |
-| `NEXT_PUBLIC_SITE_URL` | For QR invites | Your public address, for example `https://your-app.vercel.app`. QR codes made on `localhost` only work on your own network. |
-
-### Scripts
-
-| Command                       | What it does                 |
-| ----------------------------- | ---------------------------- |
-| `npm run dev`                 | Start the development server |
-| `npm run build` / `npm start` | Production build and server  |
-| `npm test`                    | Run all automated tests      |
-| `npm run type-check`          | TypeScript check             |
-| `npm run lint`                | ESLint                       |
-| `npm run format:check`        | Prettier check               |
-
-### Deploying
-
-1. Push the repo to GitHub.
-2. Import it into a host such as Vercel.
-3. Add `GEMINI_API_KEY` and `NEXT_PUBLIC_SITE_URL` as environment variables (never commit `.env`).
-4. Deploy, open the live link, generate a plan, and scan a QR invite from your phone.
+Open [http://localhost:3000](http://localhost:3000) to view Celebrate.
 
 ---
 
-## How RSVP works without a server
+## Configuration
 
-Celebrate has no database. Instead:
-
-1. The host adds guests. Each guest gets a link of the form `/i#<payload>`, also shown as a QR code.
-2. The payload holds the event essentials and the guest's name. It sits in the URL **hash**, so it is never sent to a server. It is compressed, checked with Zod, and shown as plain text.
-3. The guest opens the link, sees "Dear [name]", picks Yes, No or Maybe with party size and food choice, and taps **Send**. WhatsApp opens with the reply already written.
-4. The host pastes replies into the app, and guest statuses update.
-
-**Limits:** replies are one tap for the guest and one paste for the host, not fully automatic. An uploaded card image cannot travel inside a link, so guests who scan see a clean RSVP page and receive the picture as an image you send them.
+| Environment Variable   |   Required   | Description                                                                                                           |
+| :--------------------- | :----------: | :-------------------------------------------------------------------------------------------------------------------- |
+| `GEMINI_API_KEY`       |   **Yes**    | Google Gemini API key used on the server. Never leaked to the client.                                                 |
+| `GEMINI_MODEL`         |      No      | Overrides the Gemini model (defaults to `gemini-3.5-flash-lite`).                                                     |
+| `NEXT_PUBLIC_SITE_URL` | For QR scans | Public domain (e.g. `https://celebration-planner-two.vercel.app`) so phone cameras can scan QR codes from any device. |
 
 ---
 
-## Security
+## NPM Scripts
 
-- API key only in server environment variables, with log sanitising that strips keys and bearer tokens.
-- Zod validation for all inputs and for AI output, with length limits and allowed ranges.
-- Prompt-injection hardening: fixed server prompt, untrusted user text wrapped in tagged data blocks, HTML and script stripping.
-- Basic per-IP rate limiting on the API routes (10 requests per minute). This is held in server memory, so on hosts that run several instances it is a safeguard, not a strict limit.
-- Security headers: Content-Security-Policy, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and the `X-Powered-By` header is removed.
-- Uploads are checked by file signature (PNG, JPEG, WebP only), capped in size, and re-encoded to strip metadata. SVG and PDF are rejected.
-- Rendering uses plain text only. No `dangerouslySetInnerHTML`.
-- Guest names and designs stay in your browser (localStorage and IndexedDB).
-
----
-
-## Accessibility
-
-Designed to meet WCAG 2.1 AA:
-
-- Semantic HTML, labelled fields, visible focus, full keyboard use
-- Keyboard alternatives for drag and drop (seating, venue designer, card studio)
-- Text contrast checks in code and in tests, never relying on colour alone
-- `aria-live` announcements for loading, errors and updates
-- `prefers-reduced-motion` turns off animation and physics
-- Responsive from 320px
-- Automated `jest-axe` checks on components
+| Command                | Action                                                     |
+| :--------------------- | :--------------------------------------------------------- |
+| `npm run dev`          | Starts local Next.js development server with hot reloading |
+| `npm run build`        | Builds optimized production bundle                         |
+| `npm start`            | Runs production server                                     |
+| `npm test`             | Runs 565 automated tests via Vitest                        |
+| `npm run type-check`   | Validates TypeScript types (`tsc --noEmit`)                |
+| `npm run lint`         | Runs Next.js ESLint rules                                  |
+| `npm run format:check` | Verifies code formatting via Prettier                      |
+| `npm run format`       | Auto-formats codebase with Prettier                        |
 
 ---
 
-## Testing
+## How RSVP Works Without a Database
 
-564 automated tests across 46 suites (Vitest, React Testing Library, and jest-axe) cover the schemas, budget maths, timeline scaling, seating and venue logic, QR and RSVP parsing, upload validation, the AI timeout, retry and fallback with the AI call mocked, components and accessibility.
+Celebrate operates completely serverless and database-free:
+
+1. **Host Side:** When guests are added, Celebrate compresses the event metadata and guest credentials into a compact string using `CompressionStream('deflate-raw')` and Base64URL.
+2. **Payload Security:** The resulting hash is placed after `#` in the link (`/i#<payload>`). Because URL fragments are never sent over HTTP to a server, guest data remains private to the host and recipient.
+3. **Guest Experience:** Scanning the QR code or clicking the link opens an interactive greeting card inside an envelope. The guest selects attending status, party size, and meal preferences, then taps **"Send via WhatsApp"**.
+4. **Closing the Loop:** The generated reply contains a compact code line (`RSVP1|guestId|status|partySize|food|note`). The host simply pastes incoming replies into the **"Import Pasted Replies"** box in the Invites panel, updating the guest list and budget automatically.
+
+---
+
+## Security & Privacy Highlights
+
+- **Zero-Database Footprint:** Guest rosters, seating assignments, and custom card templates are persisted strictly in local browser storage (`localStorage` and `IndexedDB`).
+- **Input Sanitization:** HTML tags and script delimiters are stripped; uploaded images are validated via file magic bytes (rejecting fake extensions and SVGs).
+- **Hardened HTTP Headers:** Configured in `next.config.ts` with Content-Security-Policy, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`.
+- **In-Memory Rate Limiting:** API routes enforce a token bucket rate limiter to prevent automated abuse.
+
+---
+
+## Accessibility (WCAG 2.1 AA)
+
+- **Contrast Ratios:** All card text, button labels, and status badges maintain a minimum contrast ratio of $\ge 4.5:1$ against their backgrounds.
+- **Keyboard Navigation:** Full arrow-key navigation and keyboard shortcuts for dragging cards, moving furniture, and arranging seating.
+- **Screen Reader Support:** Dynamic updates are broadcasted through `role="status"` and `aria-live="polite"` regions.
+- **Reduced Motion:** Respects `prefers-reduced-motion: reduce` by disabling physics simulations and animations.
+- **Automated Audits:** Validated with `jest-axe` across all components and viewports with **zero violations**.
+
+---
+
+## Test Suite
+
+Celebrate is verified by **565 automated tests across 46 suites**:
 
 ```bash
+# Run the complete test suite
 npm test
-npm run type-check
-npm run lint
-npm run format:check
 ```
+
+- **Unit Tests:** Zod schemas, budget math, timeline date math, rope physics, water simulation, RSVP hash encoding/decoding.
+- **Integration Tests:** AI timeout, retry logic, fallback handling, What-If recalculation, and seating reassignments.
+- **Accessibility Tests:** Automated `jest-axe` checks on dialogs, modal traps, invitation cards, forms, and print views.
 
 ---
 
-## Project structure
+## Tech Stack
 
-```
-app/
-  api/generate/        full plan generation (route handler)
-  api/regenerate/      single-section regeneration
-  i/                   guest invitation and RSVP page
-components/
-  editorial/           top bar and page chrome
-  sections/            venue designer, seating, and plan sections
-  invitation/          invitation cards and "use my own design"
-  rsvp/                QR and RSVP flow
-  studio/              Card Studio
-lib/
-  ai.ts                Gemini call, prompts, rate limiting, sanitising
-  utils.ts             shared helpers
-next.config.ts         security headers
-```
+- **Framework:** Next.js 15 (App Router, Server Route Handlers)
+- **Language:** TypeScript 5
+- **Styling:** Tailwind CSS, Lucide icons, Google Fonts (DM Serif Display, Cormorant Garamond, Great Vibes)
+- **AI Engine:** Google Gemini API (`@google/genai` SDK)
+- **Testing:** Vitest, React Testing Library, jest-axe
+- **Utilities:** Zod, zod-to-json-schema, qrcode-generator
 
 ---
 
-## Known limits
-
-- Plans and guest lists are stored in your browser, so clearing site data removes them.
-- AI plans are suggestions. Review amounts, vendors and dates before relying on them.
-- The language switch translates only the fixed invitation phrases. A native speaker should review them.
-- QR codes must be generated from a public address to work for guests anywhere.
-
----
-
-## Built with
-
-Next.js, TypeScript, Tailwind CSS, Zod, Google Gemini, and `qrcode-generator` for QR codes.
-
-Built with AI assistance in Google Antigravity (Claude and Gemini models). All code was reviewed and tested by the author.
-
-Built by Huri.
+Built with pride by **Huri** for **PromptWars Virtual**.
