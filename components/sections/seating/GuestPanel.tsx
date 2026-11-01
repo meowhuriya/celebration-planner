@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, memo, type DragEvent } from "react";
+import { useState, useMemo, useEffect, memo, type DragEvent } from "react";
 import type { Guest, SeatKey } from "@/lib/seating";
 import { parseGuestNames, sanitizeName, MAX_GUESTS } from "@/lib/seating";
 import type { EventEssentials } from "@/lib/rsvp/types";
 import InvitesPanel from "@/components/rsvp/InvitesPanel";
+import { listenToRsvpSync } from "@/lib/rsvp/sync";
 
 interface GuestPanelProps {
   guests: Guest[];
@@ -63,6 +64,24 @@ function GuestPanelComponent({
 }: GuestPanelProps) {
   // Tab switcher state
   const [activeTab, setActiveTab] = useState<"seating" | "invites">("seating");
+
+  // Listen for live RSVP sync and automatically switch to invites tab
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (
+        window.location.hash === "#invites" ||
+        window.location.hash === "#rsvp" ||
+        window.location.hash === "#guest-invites"
+      ) {
+        setActiveTab("invites");
+      }
+    }
+
+    const unsubscribe = listenToRsvpSync(() => {
+      setActiveTab("invites");
+    });
+    return unsubscribe;
+  }, []);
 
   // Input states
   const [singleName, setSingleName] = useState("");
@@ -180,7 +199,7 @@ function GuestPanelComponent({
               : "text-[#5A5A5A] hover:text-[#111111]"
           }`}
         >
-          💌 Invites &amp; RSVP
+          💌 Invites &amp; RSVP (Live Tracker)
         </button>
       </div>
 

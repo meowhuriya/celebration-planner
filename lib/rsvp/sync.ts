@@ -1,13 +1,67 @@
 import { SEATING_STORAGE_KEY } from "@/lib/seating/storage";
 import type { SeatingState } from "@/lib/seating/types";
+import type { Guest } from "@/lib/seating";
 import { seatingPlanSchema } from "@/lib/seating/schema";
 
 export const RSVP_SYNC_STORAGE_KEY = "celebrate_live_rsvp_sync";
-export const RSVP_BROADCAST_CHANNEL = "celebrate_rsvp_sync";
+export const RSVP_LIVE_UPDATES_KEY = "celebrate_rsvp_live_updates";
+export const RSVP_STORAGE_KEYS = [
+  "celebrate_rsvp_live_updates",
+  "celebrate_live_rsvp_sync",
+] as const;
+
+export const RSVP_BROADCAST_CHANNEL = "celebrate_rsvp_channel";
 export const RSVP_BROADCAST_CHANNELS = [
+  "celebrate_rsvp_channel",
   "celebrate_rsvp_sync",
   "celebrate_rsvp",
 ] as const;
+
+export const SAMPLE_RSVP_GUESTS: Guest[] = [
+  {
+    id: "sample-guest-1",
+    name: "Aisha Khan",
+    group: "Bride Family",
+    rsvpStatus: "pending",
+    partySize: 2,
+    foodChoice: "vegetarian",
+    note: "Looking forward to celebrating!",
+  },
+  {
+    id: "sample-guest-2",
+    name: "Rohan Verma",
+    group: "Groom Friends",
+    rsvpStatus: "pending",
+    partySize: 1,
+    foodChoice: "non-vegetarian",
+  },
+  {
+    id: "sample-guest-3",
+    name: "Fatima Syed",
+    group: "Bride Family",
+    rsvpStatus: "pending",
+    partySize: 3,
+    foodChoice: "either",
+    note: "Excited to be there with the kids!",
+  },
+  {
+    id: "sample-guest-4",
+    name: "Kabir Das",
+    group: "Colleagues",
+    rsvpStatus: "pending",
+    partySize: 1,
+    foodChoice: "vegetarian",
+  },
+  {
+    id: "sample-guest-5",
+    name: "Meera Patel",
+    group: "VIP Guests",
+    rsvpStatus: "pending",
+    partySize: 2,
+    foodChoice: "non-vegetarian",
+    note: "Congratulations to the host!",
+  },
+];
 
 export interface LiveRsvpUpdate {
   guestId: string;
@@ -74,8 +128,9 @@ export function syncGuestRsvpLocally(
       }
     }
 
-    // 2. Set the dedicated live sync key in localStorage
+    // 2. Set the dedicated live sync keys in localStorage
     const serialized = JSON.stringify(fullUpdate);
+    window.localStorage.setItem(RSVP_LIVE_UPDATES_KEY, serialized);
     window.localStorage.setItem(RSVP_SYNC_STORAGE_KEY, serialized);
 
     // 3. Post to BroadcastChannels (inter-tab communication)
@@ -98,6 +153,13 @@ export function syncGuestRsvpLocally(
 
     // Synthetic StorageEvent for environments that don't auto-dispatch in same tab
     try {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: RSVP_LIVE_UPDATES_KEY,
+          newValue: serialized,
+          storageArea: window.localStorage,
+        })
+      );
       window.dispatchEvent(
         new StorageEvent("storage", {
           key: RSVP_SYNC_STORAGE_KEY,
@@ -151,7 +213,10 @@ export function listenToRsvpSync(
 
   // 2. Native Storage event listener (fires in all other tabs when localStorage changes)
   const handleStorage = (e: StorageEvent) => {
-    if (e.key === RSVP_SYNC_STORAGE_KEY && e.newValue) {
+    if (
+      (e.key === RSVP_LIVE_UPDATES_KEY || e.key === RSVP_SYNC_STORAGE_KEY) &&
+      e.newValue
+    ) {
       try {
         const parsed = JSON.parse(e.newValue);
         handleUpdate(parsed);
@@ -174,7 +239,9 @@ export function listenToRsvpSync(
   // 4. Window focus listener (re-checks when returning to the host tab)
   const handleFocus = () => {
     try {
-      const raw = window.localStorage.getItem(RSVP_SYNC_STORAGE_KEY);
+      const raw =
+        window.localStorage.getItem(RSVP_LIVE_UPDATES_KEY) ||
+        window.localStorage.getItem(RSVP_SYNC_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         handleUpdate(parsed);

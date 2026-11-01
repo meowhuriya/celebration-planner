@@ -3,6 +3,8 @@ import {
   syncGuestRsvpLocally,
   listenToRsvpSync,
   RSVP_SYNC_STORAGE_KEY,
+  RSVP_LIVE_UPDATES_KEY,
+  RSVP_BROADCAST_CHANNEL,
 } from "@/lib/rsvp/sync";
 import { SEATING_STORAGE_KEY } from "@/lib/seating/storage";
 
@@ -16,7 +18,7 @@ describe("Real-Time Same-Browser RSVP Sync", () => {
     localStorage.clear();
   });
 
-  it("writes update to dedicated sync key in localStorage", () => {
+  it("writes update to both celebrate_rsvp_live_updates and dedicated sync key in localStorage", () => {
     syncGuestRsvpLocally({
       guestId: "guest-test-1",
       status: "yes",
@@ -24,6 +26,13 @@ describe("Real-Time Same-Browser RSVP Sync", () => {
       foodChoice: "vegetarian",
       note: "Excited to be there!",
     });
+
+    const rawLive = localStorage.getItem(RSVP_LIVE_UPDATES_KEY);
+    expect(rawLive).not.toBeNull();
+    const parsedLive = JSON.parse(rawLive!);
+    expect(parsedLive.guestId).toBe("guest-test-1");
+    expect(parsedLive.status).toBe("yes");
+    expect(parsedLive.partySize).toBe(2);
 
     const raw = localStorage.getItem(RSVP_SYNC_STORAGE_KEY);
     expect(raw).not.toBeNull();

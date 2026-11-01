@@ -337,6 +337,51 @@ RSVP1|guest-unknown-999|yes|1|either|Who am I?
     expect(kabir?.rsvpStatus).toBe("yes");
   });
 
+  it("loads 5 realistic sample guests when Load Sample Guests button is clicked", () => {
+    const onUpdateGuestsSpy = vi.fn();
+
+    render(
+      <InvitesPanel
+        guests={[]}
+        eventEssentials={sampleEventEssentials}
+        onUpdateGuests={onUpdateGuestsSpy}
+        onPrintAllInvites={vi.fn()}
+      />
+    );
+
+    // Empty state should be visible with Load Sample Guests button
+    expect(
+      screen.getByText(/No Guests in RSVP Tracker Yet/i)
+    ).toBeInTheDocument();
+    const loadBtn = screen.getByRole("button", {
+      name: /Load Sample Guests/i,
+    });
+    fireEvent.click(loadBtn);
+
+    expect(onUpdateGuestsSpy).toHaveBeenCalledTimes(1);
+    const loadedGuests = onUpdateGuestsSpy.mock.calls[0][0] as Guest[];
+    expect(loadedGuests.length).toBe(5);
+    expect(loadedGuests.some((g) => g.name === "Aisha Khan")).toBe(true);
+  });
+
+  it("renders table with Open Guest Invite Link (/i#...) button on each guest row", () => {
+    render(
+      <InvitesPanel
+        guests={sampleGuests}
+        eventEssentials={sampleEventEssentials}
+        onUpdateGuests={vi.fn()}
+        onPrintAllInvites={vi.fn()}
+      />
+    );
+
+    const openLinkAisha = screen.getByRole("link", {
+      name: /Open Guest Invite Link \(\/i#\.\.\.\) for Aisha Khan/i,
+    });
+    expect(openLinkAisha).toBeInTheDocument();
+    expect(openLinkAisha).toHaveAttribute("target", "_blank");
+    expect(openLinkAisha.getAttribute("href")).toContain("/i#");
+  });
+
   it("passes axe accessibility tests with zero violations", async () => {
     const { container } = render(
       <InvitesPanel

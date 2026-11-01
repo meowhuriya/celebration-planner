@@ -9,7 +9,11 @@ import {
 } from "@/lib/rsvp/payload";
 import { parseRsvpReplies, calculateRsvpSummary } from "@/lib/rsvp/parser";
 import { getSiteUrlInfo, validateHostPhone } from "@/lib/rsvp/site";
-import { listenToRsvpSync, exportCatererCsv } from "@/lib/rsvp/sync";
+import {
+  listenToRsvpSync,
+  exportCatererCsv,
+  SAMPLE_RSVP_GUESTS,
+} from "@/lib/rsvp/sync";
 import QrModal from "./QrModal";
 
 interface InvitesPanelProps {
@@ -160,6 +164,12 @@ export default function InvitesPanel({
     onUpdateGuests(updated);
     setRecentlyUpdatedGuestId(guest.id);
     setTimeout(() => setRecentlyUpdatedGuestId(null), 2500);
+  };
+
+  // 1-Click Load Sample Guests
+  const handleLoadSampleGuests = () => {
+    onUpdateGuests(SAMPLE_RSVP_GUESTS);
+    setAnnouncement("Loaded 5 sample guests into the live RSVP tracker");
   };
 
   // Handle Host Phone change
@@ -339,13 +349,13 @@ export default function InvitesPanel({
           <div className="flex items-center gap-2">
             <span className="text-base">🎉</span>
             <span>
-              <strong>RSVP Updated:</strong> {liveToast.guestName} &mdash;{" "}
-              <span className="font-semibold text-emerald-800">
-                {liveToast.status}
-              </span>
+              <strong>🎉 Live RSVP Received:</strong> {liveToast.guestName}
               {liveToast.partySize > 0
                 ? ` (Party of ${liveToast.partySize})`
-                : ""}
+                : liveToast.status === "Declined"
+                  ? " (Declined)"
+                  : ""}
+              !
             </span>
           </div>
           <button
@@ -381,7 +391,7 @@ export default function InvitesPanel({
         {/* Card 2: Confirmed Attending */}
         <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 shadow-2xs">
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.08em] text-emerald-800">
-            <span>Confirmed Attending</span>
+            <span>Confirmed Attending (Headcount)</span>
             <span className="text-base">✅</span>
           </div>
           <div className="mt-1.5 flex items-baseline gap-1.5">
@@ -398,18 +408,18 @@ export default function InvitesPanel({
         {/* Card 3: Declined / Pending */}
         <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3.5 shadow-2xs">
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.08em] text-rose-800">
-            <span>Declined / Pending</span>
+            <span>Pending / Declined</span>
             <span className="text-base">⏳</span>
           </div>
           <div className="mt-1.5 flex items-baseline gap-2">
-            <span className="text-xl font-bold text-rose-900">
-              {summary.declinedCount}{" "}
-              <span className="text-xs font-normal text-rose-700">declined</span>
-            </span>
-            <span className="text-stone-300">|</span>
             <span className="text-xl font-bold text-stone-700">
               {summary.pendingCount}{" "}
               <span className="text-xs font-normal text-stone-500">pending</span>
+            </span>
+            <span className="text-stone-300">|</span>
+            <span className="text-xl font-bold text-rose-900">
+              {summary.declinedCount}{" "}
+              <span className="text-xs font-normal text-rose-700">declined</span>
             </span>
           </div>
           <p className="mt-0.5 text-[11px] text-[#6B5848]">
@@ -422,7 +432,7 @@ export default function InvitesPanel({
         {/* Card 4: Caterer Meal Breakdown */}
         <div className="rounded-xl border border-teal-200 bg-teal-50/70 p-3.5 shadow-2xs">
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.08em] text-teal-800">
-            <span>Caterer Meal Breakdown</span>
+            <span>Meal Breakdown (Veg / Non-Veg / etc.)</span>
             <span className="text-base">🍽️</span>
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -643,6 +653,17 @@ export default function InvitesPanel({
               </a>
             )}
 
+            {guests.length > 0 && (
+              <button
+                type="button"
+                onClick={handleLoadSampleGuests}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2.5 py-1 text-xs font-semibold text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+              >
+                <span>👥</span>
+                <span>Load Sample Guests</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() =>
@@ -701,143 +722,216 @@ export default function InvitesPanel({
         </div>
       </div>
 
-      {/* ── GUEST INVITES LIST ── */}
-      <div
-        role="list"
-        aria-label="List of guest invitations"
-        className="max-h-[360px] divide-y divide-[#E8DCC8] overflow-y-auto rounded-xl border border-[#E8DCC8] bg-[#FFFDF8]"
-      >
-        {filteredGuests.length === 0 ? (
-          <div className="p-6 text-center text-xs text-[#6B5848]">
-            No guests found matching your criteria.
+      {/* ── GUEST RSVP TRACKER TABLE ── */}
+      {guests.length === 0 ? (
+        <div className="flex flex-col items-center justify-center space-y-3 rounded-2xl border-2 border-dashed border-[#E8DCC8] bg-[#FFFDF8] p-8 text-center">
+          <span className="text-3xl">👥</span>
+          <div className="space-y-1">
+            <h3 className="font-serif text-base font-semibold text-[#2B1B14]">
+              No Guests in RSVP Tracker Yet
+            </h3>
+            <p className="max-w-md text-xs text-[#6B5848]">
+              Load 5 realistic sample guests with personal invite links (/i#...)
+              to test real-time cross-tab RSVP sync immediately!
+            </p>
           </div>
-        ) : (
-          filteredGuests.map((guest) => {
-            const status = guest.rsvpStatus || "pending";
-            const isCopied = copiedGuestId === guest.id;
+          <button
+            type="button"
+            onClick={handleLoadSampleGuests}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#5B1A2B] px-4 py-2.5 text-xs font-semibold text-[#FBF6EE] shadow-sm hover:bg-[#3A0F1C] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+          >
+            <span>👥</span>
+            <span>Load Sample Guests</span>
+          </button>
+        </div>
+      ) : filteredGuests.length === 0 ? (
+        <div className="rounded-xl border border-[#E8DCC8] bg-[#FFFDF8] p-8 text-center text-xs text-[#6B5848]">
+          No guests found matching your criteria.
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-[#E8DCC8] bg-[#FFFDF8] shadow-2xs">
+          <table className="w-full min-w-[720px] border-collapse text-left text-xs">
+            <caption className="sr-only">Live Host RSVP Tracker Table</caption>
+            <thead className="border-b border-[#E8DCC8] bg-[#FBF6EE] text-[11px] font-semibold uppercase tracking-wider text-[#6B5848]">
+              <tr>
+                <th scope="col" className="px-3.5 py-3">
+                  Guest Name
+                </th>
+                <th scope="col" className="px-3.5 py-3">
+                  Status
+                </th>
+                <th scope="col" className="px-3.5 py-3">
+                  Party Size
+                </th>
+                <th scope="col" className="px-3.5 py-3">
+                  Meal Choice
+                </th>
+                <th scope="col" className="px-3.5 py-3">
+                  Note
+                </th>
+                <th scope="col" className="px-3.5 py-3 text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E8DCC8]">
+              {filteredGuests.map((guest) => {
+                const status = guest.rsvpStatus || "pending";
+                const isCopied = copiedGuestId === guest.id;
+                const isRecentlyUpdated = recentlyUpdatedGuestId === guest.id;
 
-            return (
-              <div
-                key={guest.id}
-                role="listitem"
-                className={`flex flex-col justify-between gap-2.5 p-3 transition-all sm:flex-row sm:items-center ${
-                  recentlyUpdatedGuestId === guest.id
-                    ? "bg-emerald-50/90 ring-2 ring-emerald-400"
-                    : "hover:bg-[#FBF6EE]"
-                }`}
-              >
-                {/* Guest Info & Badges */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="truncate text-xs font-semibold text-[#2B1B14]">
-                      {guest.name}
-                    </span>
-
-                    {guest.group && (
-                      <span className="py-0.2 rounded-sm bg-[#E8DCC8]/40 px-1.5 text-[10px] text-[#6B5848]">
-                        {guest.group}
-                      </span>
-                    )}
+                return (
+                  <tr
+                    key={guest.id}
+                    className={`transition-colors ${
+                      isRecentlyUpdated
+                        ? "bg-emerald-50/90 ring-2 ring-emerald-400"
+                        : "hover:bg-[#FBF6EE]/60"
+                    }`}
+                  >
+                    {/* Guest Name & Group Tag */}
+                    <td className="px-3.5 py-3 align-middle font-medium text-[#2B1B14]">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-[#2B1B14]">
+                          {guest.name}
+                        </span>
+                        {guest.group && (
+                          <span className="mt-0.5 inline-block text-[10px] text-[#6B5848]">
+                            🏷️ {guest.group}
+                          </span>
+                        )}
+                      </div>
+                    </td>
 
                     {/* Status Badge */}
-                    {status === "yes" && (
-                      <span className="py-0.2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 text-[10px] font-semibold text-emerald-800">
-                        <span>✓</span>
-                        <span>Yes</span>
-                        {guest.partySize && guest.partySize > 1 && (
-                          <span>({guest.partySize})</span>
-                        )}
+                    <td className="px-3.5 py-3 align-middle">
+                      {status === "yes" && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
+                          <span>✅</span>
+                          <span>Attending</span>
+                          <span className="font-normal text-emerald-700">
+                            (Yes)
+                          </span>
+                          {guest.partySize && guest.partySize > 1 && (
+                            <span>({guest.partySize})</span>
+                          )}
+                        </span>
+                      )}
+                      {status === "no" && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800">
+                          <span>❌</span>
+                          <span>Declined</span>
+                          <span className="font-normal text-rose-700">
+                            (No)
+                          </span>
+                        </span>
+                      )}
+                      {status === "maybe" && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                          <span>🤔</span>
+                          <span>Maybe</span>
+                        </span>
+                      )}
+                      {status === "pending" && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-0.5 text-[11px] font-medium text-stone-600">
+                          <span>⏳</span>
+                          <span>Pending</span>
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Party Size */}
+                    <td className="px-3.5 py-3 align-middle text-[#2B1B14]">
+                      <span className="font-semibold">
+                        {status === "no" ? 0 : guest.partySize || 1}
                       </span>
-                    )}
-                    {status === "no" && (
-                      <span className="py-0.2 inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 text-[10px] font-semibold text-rose-800">
-                        <span>✕</span>
-                        <span>No</span>
-                      </span>
-                    )}
-                    {status === "maybe" && (
-                      <span className="py-0.2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 text-[10px] font-semibold text-amber-800">
-                        <span>?</span>
-                        <span>Maybe</span>
-                      </span>
-                    )}
-                    {status === "pending" && (
-                      <span className="py-0.2 rounded-full bg-stone-100 px-2 text-[10px] font-medium text-stone-600">
-                        Pending
-                      </span>
-                    )}
+                    </td>
 
-                    {/* Food Choice Badge */}
-                    {guest.foodChoice && status === "yes" && (
-                      <span className="py-0.2 rounded-full border border-stone-300 bg-white px-1.5 text-[10px] text-stone-700">
-                        {guest.foodChoice === "vegetarian"
-                          ? "🥦 Veg"
-                          : "🍗 Non-veg"}
-                      </span>
-                    )}
-                  </div>
+                    {/* Meal Choice */}
+                    <td className="px-3.5 py-3 align-middle">
+                      {guest.foodChoice && status === "yes" ? (
+                        <span className="inline-block rounded-md border border-stone-200 bg-white px-2 py-0.5 text-[11px] font-medium text-stone-700">
+                          {guest.foodChoice === "vegetarian"
+                            ? "🥦 Veg"
+                            : guest.foodChoice === "non-vegetarian"
+                              ? "🍗 Non-veg"
+                              : "🍽️ Any"}
+                        </span>
+                      ) : (
+                        <span className="text-[#A08C78]">—</span>
+                      )}
+                    </td>
 
-                  {guest.note && (
-                    <p className="mt-1 max-w-sm truncate text-[11px] italic text-[#6B5848]">
-                      &ldquo;{guest.note}&rdquo;
-                    </p>
-                  )}
-                </div>
+                    {/* Note */}
+                    <td className="max-w-[160px] truncate px-3.5 py-3 align-middle text-[#6B5848]">
+                      {guest.note ? (
+                        <span className="italic" title={guest.note}>
+                          &ldquo;{guest.note}&rdquo;
+                        </span>
+                      ) : (
+                        <span className="text-[#A08C78]">—</span>
+                      )}
+                    </td>
 
-                {/* Per-Guest Actions */}
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleStatus(guest)}
-                    aria-label={`Cycle status for ${guest.name}`}
-                    title="Click to toggle RSVP: Pending → Yes → No → Maybe"
-                    className="rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2 py-1 text-xs font-semibold text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-1 focus:ring-[#5B1A2B]"
-                  >
-                    🔄 Cycle
-                  </button>
+                    {/* Actions */}
+                    <td className="px-3.5 py-3 align-middle text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <a
+                          href={getGuestInviteUrl(guest)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Open Guest Invite Link (/i#...) for ${guest.name}`}
+                          className="shadow-2xs inline-flex items-center gap-1 rounded-lg border border-[#5B1A2B] bg-[#5B1A2B] px-2.5 py-1 text-xs font-semibold text-[#FBF6EE] transition-colors hover:bg-[#3A0F1C] focus:outline-none focus:ring-1 focus:ring-[#5B1A2B]"
+                        >
+                          <span>💌</span>
+                          <span>Open Guest Invite Link (/i#...) ↗</span>
+                        </a>
 
-                  <a
-                    href={getGuestInviteUrl(guest)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Open invitation preview for ${guest.name} in new tab`}
-                    className="shadow-xs inline-flex items-center gap-1 rounded-lg border border-[#5B1A2B] bg-[#5B1A2B] px-2.5 py-1 text-xs font-semibold text-[#FBF6EE] transition-colors hover:bg-[#3A0F1C] focus:outline-none focus:ring-1 focus:ring-[#5B1A2B]"
-                  >
-                    <span>Open ↗</span>
-                  </a>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(guest)}
+                          aria-label={`Cycle status for ${guest.name}`}
+                          title="Click to toggle RSVP: Pending → Yes → No → Maybe"
+                          className="rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2 py-1 text-xs font-medium text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-1 focus:ring-[#5B1A2B]"
+                        >
+                          🔄 Cycle
+                        </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleCopyLink(guest)}
-                    aria-label={`Copy invitation link for ${guest.name}`}
-                    className="rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2.5 py-1 text-xs font-semibold text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-1 focus:ring-[#5B1A2B]"
-                  >
-                    {isCopied ? "✓ Copied" : "Copy link"}
-                  </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyLink(guest)}
+                          aria-label={`Copy invitation link for ${guest.name}`}
+                          className="rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2 py-1 text-xs font-medium text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-1 focus:ring-[#5B1A2B]"
+                        >
+                          {isCopied ? "✓ Copied" : "Copy link"}
+                        </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleSendWhatsApp(guest)}
-                    aria-label={`Send invitation to ${guest.name} on WhatsApp`}
-                    className="rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-700"
-                  >
-                    WhatsApp
-                  </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSendWhatsApp(guest)}
+                          aria-label={`Send invitation to ${guest.name} on WhatsApp`}
+                          className="rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-700"
+                        >
+                          WhatsApp
+                        </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleShowQr(guest)}
-                    aria-label={`Show QR code for ${guest.name}`}
-                    className="rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2.5 py-1 text-xs font-semibold text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-1 focus:ring-[#5B1A2B]"
-                  >
-                    Show QR
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+                        <button
+                          type="button"
+                          onClick={() => handleShowQr(guest)}
+                          aria-label={`Show QR code for ${guest.name}`}
+                          className="rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2 py-1 text-xs font-medium text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-1 focus:ring-[#5B1A2B]"
+                        >
+                          Show QR
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* ── QR CODE MODAL ── */}
       {qrGuest && (
