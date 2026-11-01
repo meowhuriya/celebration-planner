@@ -9,7 +9,7 @@ import {
 } from "@/lib/rsvp/payload";
 import { parseRsvpReplies, calculateRsvpSummary } from "@/lib/rsvp/parser";
 import { getSiteUrlInfo, validateHostPhone } from "@/lib/rsvp/site";
-import { listenToRsvpSync } from "@/lib/rsvp/sync";
+import { listenToRsvpSync, exportCatererCsv } from "@/lib/rsvp/sync";
 import QrModal from "./QrModal";
 
 interface InvitesPanelProps {
@@ -54,6 +54,16 @@ export default function InvitesPanel({
   const [copiedGuestId, setCopiedGuestId] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState<string>("");
 
+  // Live real-time sync highlight & toast
+  const [liveToast, setLiveToast] = useState<{
+    guestName: string;
+    status: string;
+    partySize: number;
+  } | null>(null);
+  const [recentlyUpdatedGuestId, setRecentlyUpdatedGuestId] = useState<
+    string | null
+  >(null);
+
   // Site Address and Local Wi-Fi Warning
   const siteInfo = useMemo(() => {
     const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -63,6 +73,20 @@ export default function InvitesPanel({
   // Summary calculations
   const summary = useMemo(() => calculateRsvpSummary(guests), [guests]);
 
+  // Total expected headcount
+  const totalExpectedHeadcount = useMemo(() => {
+    return guests.reduce(
+      (acc, g) =>
+        acc +
+        (g.rsvpStatus === "no"
+          ? 0
+          : g.partySize && g.partySize > 0
+            ? g.partySize
+            : 1),
+      0
+    );
+  }, [guests]);
+
   // Listen for live same-browser RSVP updates from the guest /i tab
   useEffect(() => {
     const unsubscribe = listenToRsvpSync((update) => {
@@ -70,14 +94,26 @@ export default function InvitesPanel({
       if (guestIndex !== -1) {
         const updated = [...guests];
         const g = updated[guestIndex];
+        const newPartySize = update.status === "no" ? 0 : update.partySize;
         updated[guestIndex] = {
           ...g,
           rsvpStatus: update.status,
-          partySize: update.status === "no" ? 0 : update.partySize,
+          partySize: newPartySize,
           foodChoice: update.status === "no" ? undefined : update.foodChoice,
           note: update.note ?? g.note,
         };
         onUpdateGuests(updated);
+        setRecentlyUpdatedGuestId(update.guestId);
+        setLiveToast({
+          guestName: g.name,
+          status:
+            update.status === "yes"
+              ? "Attending"
+              : update.status === "no"
+                ? "Declined"
+                : "Tentative",
+          partySize: newPartySize,
+        });
         setAnnouncement(
           `Live RSVP received: ${g.name} is ${
             update.status === "yes"
@@ -87,10 +123,44 @@ export default function InvitesPanel({
                 : "Tentative"
           }`
         );
+        setTimeout(() => setRecentlyUpdatedGuestId(null), 3500);
       }
     });
     return unsubscribe;
   }, [guests, onUpdateGuests]);
+
+  // 1-Click quick status cycle
+  const handleToggleStatus = (guest: Guest) => {
+    const current = guest.rsvpStatus || "pending";
+    let nextStatus: RsvpStatus = "yes";
+    let nextSize = guest.partySize || 1;
+    if (current === "pending") {
+      nextStatus = "yes";
+      nextSize = Math.max(1, guest.partySize || 1);
+    } else if (current === "yes") {
+      nextStatus = "no";
+      nextSize = 0;
+    } else if (current === "no") {
+      nextStatus = "maybe";
+      nextSize = 1;
+    } else {
+      nextStatus = "pending";
+      nextSize = 1;
+    }
+
+    const updated = guests.map((g) =>
+      g.id === guest.id
+        ? {
+            ...g,
+            rsvpStatus: nextStatus,
+            partySize: nextSize,
+          }
+        : g
+    );
+    onUpdateGuests(updated);
+    setRecentlyUpdatedGuestId(guest.id);
+    setTimeout(() => setRecentlyUpdatedGuestId(null), 2500);
+  };
 
   // Handle Host Phone change
   const handlePhoneChange = (val: string) => {
@@ -258,6 +328,120 @@ export default function InvitesPanel({
       {/* ── ARIA LIVE REGION FOR SCREEN READERS ── */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
+      </div>
+
+      {/* ── LIVE TOAST NOTIFICATION ── */}
+      {liveToast && (
+        <div
+          role="status"
+          className="flex items-center justify-between gap-3 rounded-xl border border-emerald-300 bg-emerald-50/95 px-4 py-2.5 text-xs text-emerald-950 shadow-sm transition-all"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-base">🎉</span>
+            <span>
+              <strong>RSVP Updated:</strong> {liveToast.guestName} &mdash;{" "}
+              <span className="font-semibold text-emerald-800">
+                {liveToast.status}
+              </span>
+              {liveToast.partySize > 0
+                ? ` (Party of ${liveToast.partySize})`
+                : ""}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setLiveToast(null)}
+            className="rounded p-1 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-900"
+            aria-label="Dismiss RSVP notification"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* ── 4-CARD SUMMARY KPI DASHBOARD ── */}
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Card 1: Total Invited */}
+        <div className="rounded-xl border border-[#E8DCC8] bg-[#FBF6EE] p-3.5 shadow-2xs">
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.08em] text-[#6B5848]">
+            <span>Total Invited</span>
+            <span className="text-base">👥</span>
+          </div>
+          <div className="mt-1.5 flex items-baseline gap-1.5">
+            <span className="text-2xl font-bold text-[#2B1B14]">
+              {guests.length}
+            </span>
+            <span className="text-xs font-medium text-[#6B5848]">contacts</span>
+          </div>
+          <p className="mt-0.5 text-[11px] text-[#6B5848]">
+            {totalExpectedHeadcount} expected headcount
+          </p>
+        </div>
+
+        {/* Card 2: Confirmed Attending */}
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 shadow-2xs">
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.08em] text-emerald-800">
+            <span>Confirmed Attending</span>
+            <span className="text-base">✅</span>
+          </div>
+          <div className="mt-1.5 flex items-baseline gap-1.5">
+            <span className="text-2xl font-bold text-emerald-900">
+              {summary.confirmedSeats}
+            </span>
+            <span className="text-xs font-semibold text-emerald-700">seats</span>
+          </div>
+          <p className="mt-0.5 text-[11px] text-emerald-700">
+            {summary.confirmedGuestsCount} party leads confirmed
+          </p>
+        </div>
+
+        {/* Card 3: Declined / Pending */}
+        <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3.5 shadow-2xs">
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.08em] text-rose-800">
+            <span>Declined / Pending</span>
+            <span className="text-base">⏳</span>
+          </div>
+          <div className="mt-1.5 flex items-baseline gap-2">
+            <span className="text-xl font-bold text-rose-900">
+              {summary.declinedCount}{" "}
+              <span className="text-xs font-normal text-rose-700">declined</span>
+            </span>
+            <span className="text-stone-300">|</span>
+            <span className="text-xl font-bold text-stone-700">
+              {summary.pendingCount}{" "}
+              <span className="text-xs font-normal text-stone-500">pending</span>
+            </span>
+          </div>
+          <p className="mt-0.5 text-[11px] text-[#6B5848]">
+            {summary.maybeCount > 0
+              ? `${summary.maybeCount} tentative (maybe)`
+              : "Awaiting responses"}
+          </p>
+        </div>
+
+        {/* Card 4: Caterer Meal Breakdown */}
+        <div className="rounded-xl border border-teal-200 bg-teal-50/70 p-3.5 shadow-2xs">
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.08em] text-teal-800">
+            <span>Caterer Meal Breakdown</span>
+            <span className="text-base">🍽️</span>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-md bg-teal-100/80 px-2 py-0.5 text-[11px] font-semibold text-teal-900">
+              🥦 Veg: {summary.vegetarianCount}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-orange-100/80 px-2 py-0.5 text-[11px] font-semibold text-orange-900">
+              🍗 Non-veg: {summary.nonVegetarianCount}
+            </span>
+            {summary.eitherCount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-700">
+                🍽️ Any: {summary.eitherCount}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-[10px] text-teal-700">
+            Live counts for caterer handover
+          </p>
+        </div>
       </div>
 
       {/* ── LOCAL WI-FI / SITE URL WARNING ── */}
@@ -461,6 +645,17 @@ export default function InvitesPanel({
 
             <button
               type="button"
+              onClick={() =>
+                exportCatererCsv(filteredGuests, eventEssentials.t)
+              }
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2.5 py-1 text-xs font-semibold text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
+            >
+              <span>📥</span>
+              <span>Export Caterer CSV</span>
+            </button>
+
+            <button
+              type="button"
               onClick={onPrintAllInvites}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2.5 py-1 text-xs font-semibold text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-2 focus:ring-[#5B1A2B]"
             >
@@ -525,7 +720,11 @@ export default function InvitesPanel({
               <div
                 key={guest.id}
                 role="listitem"
-                className="flex flex-col justify-between gap-2.5 p-3 transition-colors hover:bg-[#FBF6EE] sm:flex-row sm:items-center"
+                className={`flex flex-col justify-between gap-2.5 p-3 transition-all sm:flex-row sm:items-center ${
+                  recentlyUpdatedGuestId === guest.id
+                    ? "bg-emerald-50/90 ring-2 ring-emerald-400"
+                    : "hover:bg-[#FBF6EE]"
+                }`}
               >
                 {/* Guest Info & Badges */}
                 <div className="min-w-0 flex-1">
@@ -587,6 +786,16 @@ export default function InvitesPanel({
 
                 {/* Per-Guest Actions */}
                 <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(guest)}
+                    aria-label={`Cycle status for ${guest.name}`}
+                    title="Click to toggle RSVP: Pending → Yes → No → Maybe"
+                    className="rounded-lg border border-[#E8DCC8] bg-[#FFFDF8] px-2 py-1 text-xs font-semibold text-[#2B1B14] hover:border-[#5B1A2B] focus:outline-none focus:ring-1 focus:ring-[#5B1A2B]"
+                  >
+                    🔄 Cycle
+                  </button>
+
                   <a
                     href={getGuestInviteUrl(guest)}
                     target="_blank"

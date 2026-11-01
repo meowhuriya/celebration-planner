@@ -3,7 +3,11 @@ import type { SeatingState } from "@/lib/seating/types";
 import { seatingPlanSchema } from "@/lib/seating/schema";
 
 export const RSVP_SYNC_STORAGE_KEY = "celebrate_live_rsvp_sync";
-export const RSVP_BROADCAST_CHANNEL = "celebrate_rsvp";
+export const RSVP_BROADCAST_CHANNEL = "celebrate_rsvp_sync";
+export const RSVP_BROADCAST_CHANNELS = [
+  "celebrate_rsvp_sync",
+  "celebrate_rsvp",
+] as const;
 
 export interface LiveRsvpUpdate {
   guestId: string;
@@ -74,14 +78,16 @@ export function syncGuestRsvpLocally(
     const serialized = JSON.stringify(fullUpdate);
     window.localStorage.setItem(RSVP_SYNC_STORAGE_KEY, serialized);
 
-    // 3. Post to BroadcastChannel (inter-tab communication)
+    // 3. Post to BroadcastChannels (inter-tab communication)
     if (typeof BroadcastChannel !== "undefined") {
-      try {
-        const channel = new BroadcastChannel(RSVP_BROADCAST_CHANNEL);
-        channel.postMessage(fullUpdate);
-        channel.close();
-      } catch {
-        // Fallback to storage event
+      for (const chName of RSVP_BROADCAST_CHANNELS) {
+        try {
+          const channel = new BroadcastChannel(chName);
+          channel.postMessage(fullUpdate);
+          channel.close();
+        } catch {
+          // Fallback to storage event
+        }
       }
     }
 
@@ -116,7 +122,7 @@ export function listenToRsvpSync(
 ): () => void {
   if (typeof window === "undefined") return () => {};
 
-  let broadcastChannel: BroadcastChannel | null = null;
+  const channels: BroadcastChannel[] = [];
   let lastTimestamp = 0;
 
   const handleUpdate = (update: LiveRsvpUpdate) => {
@@ -126,17 +132,20 @@ export function listenToRsvpSync(
     callback(update);
   };
 
-  // 1. BroadcastChannel listener (instant cross-tab messaging)
+  // 1. BroadcastChannel listeners (instant cross-tab messaging)
   if (typeof BroadcastChannel !== "undefined") {
-    try {
-      broadcastChannel = new BroadcastChannel(RSVP_BROADCAST_CHANNEL);
-      broadcastChannel.onmessage = (event) => {
-        if (event.data) {
-          handleUpdate(event.data);
-        }
-      };
-    } catch {
-      broadcastChannel = null;
+    for (const chName of RSVP_BROADCAST_CHANNELS) {
+      try {
+        const bc = new BroadcastChannel(chName);
+        bc.onmessage = (event) => {
+          if (event.data) {
+            handleUpdate(event.data);
+          }
+        };
+        channels.push(bc);
+      } catch {
+        // BroadcastChannel unavailable
+      }
     }
   }
 
@@ -178,9 +187,9 @@ export function listenToRsvpSync(
 
   // Cleanup all listeners
   return () => {
-    if (broadcastChannel) {
+    for (const bc of channels) {
       try {
-        broadcastChannel.close();
+        bc.close();
       } catch {
         // Ignore
       }
@@ -189,4 +198,78 @@ export function listenToRsvpSync(
     window.removeEventListener("celebrate_rsvp_update", handleCustomEvent);
     window.removeEventListener("focus", handleFocus);
   };
+}
+
+/**
+ * Exports the host's RSVP tracking table as a clean, RFC-4180 compliant CSV file for caterers and vendors.
+ */
+export function exportCatererCsv(
+  guests: Array<{
+    name: string;
+    group?: string;
+    rsvpStatus?: string;
+    partySize?: number;
+    foodChoice?: string;
+    note?: string;
+  }>,
+  eventTitle: string = "Celebration"
+): void {
+  if (typeof window === "undefined" || !document) return;
+
+  const headers = [
+    "Guest Name",
+    "Group",
+    "RSVP Status",
+    "Party Size",
+    "Meal Preference",
+    "Guest Note",
+  ];
+
+  const escapeCsv = (str: string | undefined | null) => {
+    if (!str) return '""';
+    const escaped = str.replace(/"/g, '""');
+    return `"${escaped}"`;
+  };
+
+  const rows = guests.map((g) => [
+    escapeCsv(g.name),
+    escapeCsv(g.group || "General"),
+    escapeCsv(
+      g.rsvpStatus === "yes"
+        ? "Attending"
+        : g.rsvpStatus === "no"
+          ? "Declined"
+          : g.rsvpStatus === "maybe"
+            ? "Maybe"
+            : "Pending"
+    ),
+    g.rsvpStatus === "no" ? "0" : (g.partySize || 1).toString(),
+    escapeCsv(
+      g.foodChoice
+        ? g.foodChoice === "vegetarian"
+          ? "Vegetarian"
+          : g.foodChoice === "non-vegetarian"
+            ? "Non-Vegetarian"
+            : "Either"
+        : "—"
+    ),
+    escapeCsv(g.note || "—"),
+  ]);
+
+  const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join(
+    "\r\n"
+  );
+
+  const blob = new Blob(["\uFEFF" + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  const cleanTitle = eventTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  link.download = `caterer-rsvp-summary-${cleanTitle || "event"}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }

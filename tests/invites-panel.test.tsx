@@ -314,6 +314,29 @@ RSVP1|guest-unknown-999|yes|1|either|Who am I?
     expect(onPrintSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("supports 1-click status cycle toggle", () => {
+    const onUpdateGuestsSpy = vi.fn();
+
+    render(
+      <InvitesPanel
+        guests={sampleGuests}
+        eventEssentials={sampleEventEssentials}
+        onUpdateGuests={onUpdateGuestsSpy}
+        onPrintAllInvites={vi.fn()}
+      />
+    );
+
+    const cycleBtn = screen.getByRole("button", {
+      name: /Cycle status for Kabir Das/i,
+    });
+    fireEvent.click(cycleBtn);
+
+    expect(onUpdateGuestsSpy).toHaveBeenCalledTimes(1);
+    const updated = onUpdateGuestsSpy.mock.calls[0][0] as Guest[];
+    const kabir = updated.find((g) => g.id === "guest-4");
+    expect(kabir?.rsvpStatus).toBe("yes");
+  });
+
   it("passes axe accessibility tests with zero violations", async () => {
     const { container } = render(
       <InvitesPanel
